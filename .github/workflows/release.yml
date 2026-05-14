@@ -1,0 +1,73 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 1.1.0)'
+        required: true
+        default: '1.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & publish MSI
+    runs-on: windows-latest
+
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'
+          if ($tag -like 'v*') { $v = $tag.Substring(1) }
+          elseif ('${{ github.event.inputs.version }}') { $v = '${{ github.event.inputs.version }}' }
+          else { $v = '0.0.0' }
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Version: $v"
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore TrayLight.sln
+
+      - name: Run tests
+        run: dotnet test tests/TrayLight.Tests/TrayLight.Tests.csproj -c Release
+
+      - name: Build MSI
+        run: dotnet build src/TrayLight.Installer/TrayLight.Installer.wixproj -c Release -p:ProductVersion=${{ steps.ver.outputs.version }}
+
+      - name: Rename MSI
+        shell: pwsh
+        run: |
+          $src = 'src/TrayLight.Installer/bin/x64/Release/TrayLight.msi'
+          $dst = "artifacts/TrayLight-v${{ steps.ver.outputs.version }}.msi"
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          Copy-Item $src $dst
+          Get-Item $dst | Select Name, Length
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: TrayLight ${{ steps.ver.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            artifacts/*.msi

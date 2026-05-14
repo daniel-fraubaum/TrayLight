@@ -1,0 +1,25 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:tb="http://www.hardcodet.net/taskbar">
+
+    <!-- Tray Icon definition. The IconSource is bound to a viewmodel
+         property that swaps between two pre-built .ico resources
+         (app-normal.ico / app-warning.ico). H.NotifyIcon.Wpf has been
+         flaky with programmatically generated ImageSource objects, so we
+         keep the icons static and just swap which one is shown. -->
+    <tb:TaskbarIcon x:Key="AppTrayIcon"
+                    IconSource="{Binding IconSource}"
+                    ToolTipText="{Binding ToolTipText}"
+                    NoLeftClickDelay="True"
+                    LeftClickCommand="{Binding ShowPopupCommand}">
+        <tb:TaskbarIcon.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="About"   Command="{Binding AboutCommand}" />
+                <MenuItem Header="Refresh" Command="{Binding RefreshCommand}" />
+                <Separator />
+                <MenuItem Header="Quit"    Command="{Binding QuitCommand}" />
+            </ContextMenu>
+        </tb:TaskbarIcon.ContextMenu>
+    </tb:TaskbarIcon>
+
+</ResourceDictionary>

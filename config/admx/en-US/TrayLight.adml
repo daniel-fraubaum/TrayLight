@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<policyDefinitionResources revision="1.0" schemaVersion="1.0"
+                           xmlns="http://schemas.microsoft.com/GroupPolicy/2006/07/PolicyDefinitions">
+  <displayName>TrayLight</displayName>
+  <description>TrayLight policy template for Intune and Group Policy.</description>
+
+  <resources>
+    <stringTable>
+      <string id="SUPPORTED_TrayLight">TrayLight 1.0 or later</string>
+
+      <string id="Cat_TrayLight">TrayLight</string>
+      <string id="Cat_Branding">Branding</string>
+      <string id="Cat_Behavior">Behavior</string>
+      <string id="Cat_Footer">Footer</string>
+      <string id="Cat_Logging">Logging</string>
+      <string id="Cat_InfoItems">Information Tiles</string>
+      <string id="Cat_Shortcuts">Shortcuts</string>
+
+      <!-- Branding -->
+      <string id="Pol_Branding_Title">Application title</string>
+      <string id="Pol_Branding_Title_Help">Text shown in the tray popup header. Default: IT Support.</string>
+      <string id="Pol_Branding_AccentColor">Accent color</string>
+      <string id="Pol_Branding_AccentColor_Help">Hex color used for highlights, e.g. #0078D4.</string>
+      <string id="Pol_Branding_Logo">Logo path or URL</string>
+      <string id="Pol_Branding_Logo_Help">Enter a URL (https://...) or a local file path. URLs are downloaded and cached automatically.</string>
+      <string id="Pol_Branding_TrayIcon">Tray icon path</string>
+      <string id="Pol_Branding_TrayIcon_Help">Optional path to an .ico file used for the system tray icon.</string>
+      <string id="Pol_Branding_CompanyName">Company name</string>
+      <string id="Pol_Branding_CompanyName_Help">Shown in the About dialog and welcome screen.</string>
+
+      <!-- Behavior -->
+      <string id="Pol_Behavior_AutoStart">Auto-start at logon</string>
+      <string id="Pol_Behavior_AutoStart_Help">When enabled, TrayLight starts automatically when the user signs in.</string>
+      <string id="Pol_Behavior_RefreshIntervalMinutes">Info-tile refresh interval (minutes)</string>
+      <string id="Pol_Behavior_RefreshIntervalMinutes_Help">How often each info-tile provider re-evaluates. 0 disables periodic refresh.</string>
+      <string id="Pol_Behavior_ShowWelcomeScreen">Show welcome screen on first launch</string>
+      <string id="Pol_Behavior_ShowWelcomeScreen_Help">Disable to suppress the first-run welcome dialog.</string>
+      <string id="Pol_Behavior_NotifyOnUpdates">Show notification badges</string>
+      <string id="Pol_Behavior_NotifyOnUpdates_Help">When enabled, the tray icon shows a counter for active warnings.</string>
+      <string id="Pol_Behavior_RebootWarningDays">Warn after uptime exceeds (days)</string>
+      <string id="Pol_Behavior_RebootWarningDays_Help">Number of days a device can stay up before the Last-Reboot tile raises a warning. Set to 0 to disable. Default: 7.</string>
+
+      <!-- Footer -->
+      <string id="Pol_Footer_Text">Footer text</string>
+      <string id="Pol_Footer_Text_Help">Custom text shown above the fixed Powered by headsinthecloud.blog line.</string>
+      <string id="Pol_Footer_ShowLastSync">Show last-sync timestamp</string>
+      <string id="Pol_Footer_ShowLastSync_Help">Display the last successful configuration reload time in the footer.</string>
+      <string id="Pol_Footer_InfoText">Info text block</string>
+      <string id="Pol_Footer_InfoText_Help">Free-text information block shown above the footer. Use * to wrap bold text (e.g. *Office Hours*). Use | for line breaks. Use || for blank lines between sections.&#xD;&#xA;&#xD;&#xA;Example: *IT-Office Hours* | Mon-Thu: 07:00-17:00 | Fri: 07:00-15:00 || *IT-Hotline* | +43 1 234 5678</string>
+
+      <!-- Logging -->
+      <string id="Pol_Logging_EventLog">Write to Windows Event Log</string>
+      <string id="Pol_Logging_EventLog_Help">Enable to forward events to Application Log (source TrayLight).</string>
+      <string id="Pol_Logging_FileLog">Write rolling file log</string>
+      <string id="Pol_Logging_FileLog_Help">Enable to write daily-rolling logs under %ProgramData%\TrayLight\logs.</string>
+      <string id="Pol_Logging_Retention">File log retention (days)</string>
+      <string id="Pol_Logging_Retention_Help">Number of daily log files to keep. Older files are deleted on startup.</string>
+      <string id="Pol_Logging_Level">Minimum log level</string>
+      <string id="Pol_Logging_Level_Help">Lowest severity that gets recorded. Default: Information.</string>
+      <string id="LogLevel_Trace">Trace</string>
+      <string id="LogLevel_Debug">Debug</string>
+      <string id="LogLevel_Information">Information</string>
+      <string id="LogLevel_Warning">Warning</string>
+      <string id="LogLevel_Error">Error</string>
+      <string id="LogLevel_Critical">Critical</string>
+
+      <!-- Info items -->
+      <string id="Pol_InfoItem_Help">Configure this information tile. Enable the policy to show the tile; set it to Disabled or Not Configured to hide it. Position controls grid order (0 - 7); use a negative value to hide. Title and Icon override the built-in defaults; Icon takes a Segoe Fluent Icons code such as E977. ShowNotificationBadge = 1 highlights the tile when it raises a warning.</string>
+      <string id="Pol_InfoItem_ComputerName">Tile: Computer name</string>
+      <string id="Pol_InfoItem_OsVersion">Tile: Operating system version</string>
+      <string id="Pol_InfoItem_LastReboot">Tile: Last reboot / uptime</string>
+      <string id="Pol_InfoItem_StorageUsed">Tile: Storage used</string>
+      <string id="Pol_InfoItem_NetworkInfo">Tile: Network information</string>
+      <string id="Pol_InfoItem_SerialNumber">Tile: Serial number</string>
+      <string id="Pol_InfoItem_IntuneSync">Tile: Intune sync</string>
+
+      <!-- Shortcuts -->
+      <string id="Pol_Shortcuts_Allow">Allow shortcut tiles</string>
+      <string id="Pol_Shortcuts_Allow_Help">Master toggle for all shortcut tiles. Disable to hide every shortcut regardless of per-slot configuration.</string>
+      <string id="Pol_Shortcut_Help">Configure a shortcut button in the Quick Actions section.&#xD;&#xA;&#xD;&#xA;Title: Button label shown to the user (e.g. IT Helpdesk)&#xD;&#xA;Subtitle: Optional secondary text shown on hover (e.g. Create a support ticket)&#xD;&#xA;&#xD;&#xA;ActionType - what happens when clicked:&#xD;&#xA;  url = Opens a website or link in the default browser (e.g. https://helpdesk.contoso.com)&#xD;&#xA;  app = Launches an installed application (e.g. C:\Program Files\TeamViewer\TeamViewer.exe)&#xD;&#xA;  command = Runs a PowerShell command silently (e.g. powershell.exe -WindowStyle Hidden -Command Start-Process 'CompanyPortal:')&#xD;&#xA;&#xD;&#xA;Icon: Segoe Fluent Icons code. Common icons:&#xD;&#xA;  E8F2 = Headset (support/helpdesk)&#xD;&#xA;  E8AB = Remote desktop&#xD;&#xA;  E774 = Globe (website/intranet)&#xD;&#xA;  E779 = Phone&#xD;&#xA;  E715 = Mail&#xD;&#xA;  E8A7 = Download&#xD;&#xA;  E946 = Settings&#xD;&#xA;&#xD;&#xA;Position: Order in the grid (0 = first, 5 = last)</string>
+      <string id="Pol_Shortcut_1">Shortcut slot 1</string>
+      <string id="Pol_Shortcut_2">Shortcut slot 2</string>
+      <string id="Pol_Shortcut_3">Shortcut slot 3</string>
+      <string id="Pol_Shortcut_4">Shortcut slot 4</string>
+      <string id="Pol_Shortcut_5">Shortcut slot 5</string>
+      <string id="Pol_Shortcut_6">Shortcut slot 6</string>
+    </stringTable>
+
+    <presentationTable>
+      <presentation id="Pol_Branding_Title">
+        <textBox refId="Branding_Title_Value"><label>Title:</label><defaultValue>IT Support</defaultValue></textBox>
+      </presentation>
+      <presentation id="Pol_Branding_AccentColor">
+        <textBox refId="Branding_AccentColor_Value"><label>Accent color (hex):</label><defaultValue>#0078D4</defaultValue></textBox>
+      </presentation>
+      <presentation id="Pol_Branding_Logo">
+        <textBox refId="Branding_Logo_Value"><label>Logo URL or file path:</label></textBox>
+      </presentation>
+      <presentation id="Pol_Branding_TrayIcon">
+        <textBox refId="Branding_TrayIcon_Value"><label>Icon file path:</label></textBox>
+      </presentation>
+      <presentation id="Pol_Branding_CompanyName">
+        <textBox refId="Branding_CompanyName_Value"><label>Company name:</label></textBox>
+      </presentation>
+      <presentation id="Pol_Behavior_RefreshIntervalMinutes">
+        <decimalTextBox refId="Behavior_RefreshIntervalMinutes_Value" defaultValue="30">Refresh interval (minutes):</decimalTextBox>
+      </presentation>
+      <presentation id="Pol_Behavior_RebootWarningDays">
+        <decimalTextBox refId="Behavior_RebootWarningDays_Value" defaultValue="7">Warn after (days):</decimalTextBox>
+      </presentation>
+      <presentation id="Pol_Footer_Text">
+        <textBox refId="Footer_Text_Value"><label>Footer text:</label></textBox>
+      </presentation>
+      <presentation id="Pol_Footer_InfoText">
+        <textBox refId="Footer_InfoText_Value"><label>Info text (use * for bold, | for line break, || for blank line):</label></textBox>
+      </presentation>
+      <presentation id="Pol_Logging_RetentionDays">
+        <decimalTextBox refId="Logging_RetentionDays_Value" defaultValue="7">Retention (days):</decimalTextBox>
+      </presentation>
+      <presentation id="Pol_Logging_MinimumLevel">
+        <dropdownList refId="Logging_MinimumLevel_Value" defaultItem="2">Minimum level:</dropdownList>
+      </presentation>
+
+      <!-- Info item presentations -->
+      <presentation id="Pol_InfoItem_ComputerName">
+        <decimalTextBox refId="InfoItem_ComputerName_Position" defaultValue="0">Position (0 - 7):</decimalTextBox>
+        <textBox refId="InfoItem_ComputerName_Title"><label>Title:</label><defaultValue>Computer Name</defaultValue></textBox>
+        <textBox refId="InfoItem_ComputerName_Icon"><label>Icon (Segoe Fluent code). Default: E977 = Computer:</label><defaultValue>E977</defaultValue></textBox>
+      </presentation>
+
+      <presentation id="Pol_InfoItem_OsVersion">
+        <decimalTextBox refId="InfoItem_OsVersion_Position" defaultValue="1">Position (0 - 7):</decimalTextBox>
+        <textBox refId="InfoItem_OsVersion_Title"><label>Title:</label><defaultValue>OS Version</defaultValue></textBox>
+        <textBox refId="InfoItem_OsVersion_Icon"><label>Icon (Segoe Fluent code). Default: E770 = Windows logo:</label><defaultValue>E770</defaultValue></textBox>
+      </presentation>
+
+      <presentation id="Pol_InfoItem_LastReboot">
+        <decimalTextBox refId="InfoItem_LastReboot_Position" defaultValue="2">Position (0 - 7):</decimalTextBox>
+        <textBox refId="InfoItem_LastReboot_Title"><label>Title:</label><defaultValue>Last Reboot</defaultValue></textBox>
+        <textBox refId="InfoItem_LastReboot_Icon"><label>Icon (Segoe Fluent code). Default: E777 = Clock:</label><defaultValue>E777</defaultValue></textBox>
+        <decimalTextBox refId="InfoItem_LastReboot_Badge" defaultValue="1">Show notification badge (0 or 1):</decimalTextBox>
+      </presentation>
+
+      <presentation id="Pol_InfoItem_StorageUsed">
+        <decimalTextBox refId="InfoItem_StorageUsed_Position" defaultValue="3">Position (0 - 7):</decimalTextBox>
+        <textBox refId="InfoItem_StorageUsed_Title"><label>Title:</label><defaultValue>Storage</defaultValue></textBox>
+        <textBox refId="InfoItem_StorageUsed_Icon"><label>Icon (Segoe Fluent code). Default: EDA2 = Hard drive:</label><defaultValue>EDA2</defaultValue></textBox>
+        <decimalTextBox refId="InfoItem_StorageUsed_Badge" defaultValue="1">Show notification badge (0 or 1):</decimalTextBox>
+        <decimalTextBox refId="InfoItem_StorageUsed_Limit" defaultValue="90">Warning threshold (% used):</decimalTextBox>
+      </presentation>
+
+      <presentation id="Pol_InfoItem_NetworkInfo">
+        <decimalTextBox refId="InfoItem_NetworkInfo_Position" defaultValue="4">Position (0 - 7):</decimalTextBox>
+        <textBox refId="InfoItem_NetworkInfo_Title"><label>Title:</label><defaultValue>Network</defaultValue></textBox>
+        <textBox refId="InfoItem_NetworkInfo_Icon"><label>Icon (Segoe Fluent code). Default: E839 = Network:</label><defaultValue>E839</defaultValue></textBox>
+      </presentation>
+
+      <presentation id="Pol_InfoItem_SerialNumber">
+        <decimalTextBox refId="InfoItem_SerialNumber_Position" defaultValue="4">Position (0 - 7):</decimalTextBox>
+        <textBox refId="InfoItem_SerialNumber_Title"><label>Title:</label><defaultValue>Serial Number</defaultValue></textBox>
+        <textBox refId="InfoItem_SerialNumber_Icon"><label>Icon (Segoe Fluent code). Default: E950 = Tag/Barcode:</label><defaultValue>E950</defaultValue></textBox>
+      </presentation>
+
+      <presentation id="Pol_InfoItem_IntuneSync">
+        <decimalTextBox refId="InfoItem_IntuneSync_Position" defaultValue="5">Position (0 - 7):</decimalTextBox>
+        <textBox refId="InfoItem_IntuneSync_Title"><label>Title:</label><defaultValue>Intune Sync</defaultValue></textBox>
+        <textBox refId="InfoItem_IntuneSync_Icon"><label>Icon (Segoe Fluent code). Default: E895 = Sync:</label><defaultValue>E895</defaultValue></textBox>
+      </presentation>
+
+      <!-- Shortcut presentations -->
+      <presentation id="Pol_Shortcut_1">
+        <textBox refId="Shortcut_1_Title"><label>Title:</label><defaultValue>IT Support</defaultValue></textBox>
+        <textBox refId="Shortcut_1_Subtitle"><label>Subtitle:</label><defaultValue>Open helpdesk</defaultValue></textBox>
+        <textBox refId="Shortcut_1_ActionType"><label>Action type (url / app / command):</label><defaultValue>url</defaultValue></textBox>
+        <textBox refId="Shortcut_1_Action"><label>Action (URL, path, or command):</label><defaultValue>https://helpdesk.example.com</defaultValue></textBox>
+        <textBox refId="Shortcut_1_Icon"><label>Icon (Segoe Fluent code, e.g. E8F2):</label><defaultValue>E8F2</defaultValue></textBox>
+        <decimalTextBox refId="Shortcut_1_Position" defaultValue="0">Position (0 - 5):</decimalTextBox>
+      </presentation>
+
+      <presentation id="Pol_Shortcut_2">
+        <textBox refId="Shortcut_2_Title"><label>Title:</label><defaultValue>Remote Support</defaultValue></textBox>
+        <textBox refId="Shortcut_2_Subtitle"><label>Subtitle:</label><defaultValue>Start TeamViewer</defaultValue></textBox>
+        <textBox refId="Shortcut_2_ActionType"><label>Action type (url / app / command):</label><defaultValue>app</defaultValue></textBox>
+        <textBox refId="Shortcut_2_Action"><label>Action (URL, path, or command):</label><defaultValue>C:\Program Files\TeamViewer\TeamViewer.exe</defaultValue></textBox>
+        <textBox refId="Shortcut_2_Icon"><label>Icon (Segoe Fluent code):</label><defaultValue>E8AB</defaultValue></textBox>
+        <decimalTextBox refId="Shortcut_2_Position" defaultValue="1">Position (0 - 5):</decimalTextBox>
+      </presentation>
+
+      <presentation id="Pol_Shortcut_3">
+        <textBox refId="Shortcut_3_Title"><label>Title:</label><defaultValue>Company Portal</defaultValue></textBox>
+        <textBox refId="Shortcut_3_Subtitle"><label>Subtitle:</label><defaultValue>Install apps</defaultValue></textBox>
+        <textBox refId="Shortcut_3_ActionType"><label>Action type (url / app / command):</label><defaultValue>command</defaultValue></textBox>
+        <textBox refId="Shortcut_3_Action"><label>Action (URL, path, or command):</label><defaultValue>powershell.exe -WindowStyle Hidden -Command Start-Process 'companyportal:'</defaultValue></textBox>
+        <textBox refId="Shortcut_3_Icon"><label>Icon (Segoe Fluent code):</label><defaultValue>E8A7</defaultValue></textBox>
+        <decimalTextBox refId="Shortcut_3_Position" defaultValue="2">Position (0 - 5):</decimalTextBox>
+      </presentation>
+
+      <presentation id="Pol_Shortcut_4">
+        <textBox refId="Shortcut_4_Title"><label>Title:</label><defaultValue>Intranet</defaultValue></textBox>
+        <textBox refId="Shortcut_4_Subtitle"><label>Subtitle:</label><defaultValue>Open company intranet</defaultValue></textBox>
+        <textBox refId="Shortcut_4_ActionType"><label>Action type (url / app / command):</label><defaultValue>url</defaultValue></textBox>
+        <textBox refId="Shortcut_4_Action"><label>Action (URL, path, or command):</label><defaultValue>https://intranet.example.com</defaultValue></textBox>
+        <textBox refId="Shortcut_4_Icon"><label>Icon (Segoe Fluent code):</label><defaultValue>E774</defaultValue></textBox>
+        <decimalTextBox refId="Shortcut_4_Position" defaultValue="3">Position (0 - 5):</decimalTextBox>
+      </presentation>
+
+      <presentation id="Pol_Shortcut_5">
+        <textBox refId="Shortcut_5_Title"><label>Title:</label><defaultValue>IT-Hotline</defaultValue></textBox>
+        <textBox refId="Shortcut_5_Subtitle"><label>Subtitle:</label><defaultValue>Call support</defaultValue></textBox>
+        <textBox refId="Shortcut_5_ActionType"><label>Action type (url / app / command):</label><defaultValue>url</defaultValue></textBox>
+        <textBox refId="Shortcut_5_Action"><label>Action (URL, path, or command):</label><defaultValue>tel:+4312345678</defaultValue></textBox>
+        <textBox refId="Shortcut_5_Icon"><label>Icon (Segoe Fluent code):</label><defaultValue>E779</defaultValue></textBox>
+        <decimalTextBox refId="Shortcut_5_Position" defaultValue="4">Position (0 - 5):</decimalTextBox>
+      </presentation>
+
+      <presentation id="Pol_Shortcut_6">
+        <textBox refId="Shortcut_6_Title"><label>Title:</label><defaultValue>Mail IT</defaultValue></textBox>
+        <textBox refId="Shortcut_6_Subtitle"><label>Subtitle:</label><defaultValue>Send email to IT</defaultValue></textBox>
+        <textBox refId="Shortcut_6_ActionType"><label>Action type (url / app / command):</label><defaultValue>url</defaultValue></textBox>
+        <textBox refId="Shortcut_6_Action"><label>Action (URL, path, or command):</label><defaultValue>mailto:it-support@example.com</defaultValue></textBox>
+        <textBox refId="Shortcut_6_Icon"><label>Icon (Segoe Fluent code):</label><defaultValue>E715</defaultValue></textBox>
+        <decimalTextBox refId="Shortcut_6_Position" defaultValue="5">Position (0 - 5):</decimalTextBox>
+      </presentation>
+    </presentationTable>
+  </resources>
+</policyDefinitionResources>

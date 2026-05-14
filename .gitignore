@@ -1,0 +1,21 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+AppPackages/
+BundleArtifacts/
+deploy/dist/
+artifacts/
+
+# Local secrets / signing material
+*.pfx
+*.cer
+
+# Local diagnostic dumps (machine-specific, never commit)
+Diag.txt
+intune-sync-diag.txt
+
+packages/
+TestResults/
+*.msi

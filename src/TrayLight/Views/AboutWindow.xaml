@@ -1,0 +1,200 @@
+<Window x:Class="TrayLight.Views.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:TrayLight.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:AboutViewModel}"
+        Title="About TrayLight"
+        Width="560" Height="640"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Ideal"
+        Background="Transparent"
+        Loaded="Window_Loaded">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary x:Name="ThemeDictionary" Source="/Themes/Light.xaml" />
+                <ResourceDictionary Source="/Themes/Common.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+                <Setter Property="Background"      Value="{Binding AccentBrush}" />
+                <Setter Property="Foreground"      Value="White" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding"         Value="16,8" />
+                <Setter Property="FontFamily"      Value="{StaticResource UiFontFamily}" />
+                <Setter Property="FontSize"        Value="13" />
+                <Setter Property="FontWeight"      Value="SemiBold" />
+                <Setter Property="Cursor"          Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="Bd"
+                                    Background="{TemplateBinding Background}"
+                                    CornerRadius="6"
+                                    Padding="{TemplateBinding Padding}"
+                                    SnapsToDevicePixels="True">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.9" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.78" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border CornerRadius="8"
+            Background="{DynamicResource WindowBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrushSubtle}"
+            BorderThickness="1"
+            Padding="24,20"
+            TextElement.FontFamily="{StaticResource UiFontFamily}"
+            TextElement.Foreground="{DynamicResource TextPrimaryBrush}">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /> <!-- 0 title bar     -->
+                <RowDefinition Height="Auto" /> <!-- 1 header        -->
+                <RowDefinition Height="Auto" /> <!-- 2 author        -->
+                <RowDefinition Height="Auto" /> <!-- 3 separator     -->
+                <RowDefinition Height="Auto" /> <!-- 4 sysinfo label -->
+                <RowDefinition Height="*"    /> <!-- 5 sysinfo box   -->
+                <RowDefinition Height="Auto" /> <!-- 6 actions       -->
+                <RowDefinition Height="Auto" /> <!-- 7 copyright     -->
+            </Grid.RowDefinitions>
+
+            <!-- Title bar drag handle + close. -->
+            <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Button Width="28" Height="28"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        Click="CloseButton_Click"
+                        ToolTip="Close">
+                    <TextBlock Text="&#xE8BB;"
+                               FontFamily="{StaticResource IconFontFamily}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                </Button>
+            </Grid>
+
+            <!-- ===================== HEADER ===================== -->
+            <Grid Grid.Row="1" Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Image Grid.Column="0"
+                       MaxHeight="44" Stretch="Uniform"
+                       VerticalAlignment="Center"
+                       Margin="0,0,14,0"
+                       Source="{Binding LogoSource}"
+                       Visibility="{Binding LogoSource, Converter={x:Static vm:NonEmptyToVisibilityConverter.Instance}}" />
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding AppName}"
+                               Style="{StaticResource HeaderTitleStyle}"
+                               FontSize="22" />
+                    <TextBlock Style="{StaticResource LabelTextStyle}">
+                        <Run Text="Version " />
+                        <Run Text="{Binding Version, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+
+            <!-- Author + blog link + customer line. -->
+            <StackPanel Grid.Row="2" Margin="0,12,0,0">
+                <TextBlock Style="{StaticResource BodyTextStyle}">
+                    <Run Text="Created by " />
+                    <Hyperlink NavigateUri="{Binding BlogLinkUrl}"
+                               RequestNavigate="Hyperlink_RequestNavigate"
+                               TextDecorations="None"
+                               Foreground="{Binding AccentBrush}">
+                        <Run Text="{Binding BlogLinkText, Mode=OneWay}" />
+                    </Hyperlink>
+                    <Run Text=" - Daniel Fraubaum" />
+                </TextBlock>
+                <TextBlock Text="{Binding CompanyName}"
+                           Style="{StaticResource LabelTextStyle}"
+                           Margin="0,8,0,0"
+                           Visibility="{Binding CompanyName, Converter={x:Static vm:NonEmptyToVisibilityConverter.Instance}}" />
+            </StackPanel>
+
+            <Border Grid.Row="3"
+                    Height="1"
+                    Background="{DynamicResource BorderBrushSubtle}"
+                    Margin="0,18,0,14" />
+
+            <!-- ===================== SYSTEM INFO ===================== -->
+            <TextBlock Grid.Row="4"
+                       Text="System information"
+                       FontFamily="{StaticResource UiFontFamily}"
+                       FontSize="13"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
+                       Margin="0,0,0,8" />
+
+            <Border Grid.Row="5"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrushSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <TextBox Text="{Binding SystemInfoDump, Mode=OneWay}"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         FontFamily="Consolas, Cascadia Mono"
+                         FontSize="11"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         Foreground="{DynamicResource TextPrimaryBrush}"
+                         Padding="10" />
+            </Border>
+
+            <!-- ===================== ACTIONS ===================== -->
+            <StackPanel Grid.Row="6"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="0,12,0,0">
+                <Button Style="{StaticResource SecondaryButtonStyle}"
+                        Content="Close"
+                        Click="CloseButton_Click"
+                        Margin="0,0,8,0" />
+                <Button Style="{StaticResource PrimaryButtonStyle}"
+                        Content="{Binding CopyButtonText}"
+                        Command="{Binding CopySystemInfoCommand}" />
+            </StackPanel>
+
+            <!-- ===================== COPYRIGHT ===================== -->
+            <TextBlock Grid.Row="7"
+                       Text="{Binding Copyright}"
+                       Style="{StaticResource PoweredByStyle}"
+                       HorizontalAlignment="Left"
+                       Margin="0,12,0,0" />
+        </Grid>
+    </Border>
+</Window>

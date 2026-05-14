@@ -1,0 +1,51 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build (${{ matrix.configuration }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore TrayLight.sln
+
+      - name: Build
+        run: dotnet build TrayLight.sln -c ${{ matrix.configuration }} --no-restore
+
+      - name: Test
+        run: |
+          dotnet test tests/TrayLight.Tests/TrayLight.Tests.csproj `
+            -c ${{ matrix.configuration }} `
+            -p:Platform=x64 `
+            --no-build
+
+      - name: Build MSI
+        if: matrix.configuration == 'Release'
+        run: dotnet build src/TrayLight.Installer/TrayLight.Installer.wixproj -c Release

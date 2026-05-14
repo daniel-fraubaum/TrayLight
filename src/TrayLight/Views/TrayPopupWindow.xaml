@@ -1,0 +1,261 @@
+<Window x:Class="TrayLight.Views.TrayPopupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:TrayLight.ViewModels"
+        xmlns:v="clr-namespace:TrayLight.Views"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:TrayPopupViewModel}"
+        Title="TrayLight"
+        Width="380"
+        SizeToContent="Height"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Ideal"
+        Background="Transparent"
+        Loaded="Window_Loaded"
+        Deactivated="Window_Deactivated">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary x:Name="ThemeDictionary" Source="/Themes/Light.xaml" />
+                <ResourceDictionary Source="/Themes/Common.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <!-- Outer border supplies the rounded corners + drop shadow.
+         AllowsTransparency on the Window means everything outside this border
+         is fully transparent, so the rounded corners look clean (no black
+         square behind them). ClipToBounds keeps the inner content honest. -->
+    <Border x:Name="RootBorder"
+            CornerRadius="8"
+            Background="{DynamicResource WindowBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrushSubtle}"
+            BorderThickness="1"
+            ClipToBounds="True"
+            Padding="16"
+            Margin="12"
+            TextElement.FontFamily="{StaticResource UiFontFamily}"
+            TextElement.Foreground="{DynamicResource TextPrimaryBrush}">
+
+        <Border.Effect>
+            <DropShadowEffect Color="Black"
+                              Opacity="0.25"
+                              BlurRadius="16"
+                              ShadowDepth="2"
+                              Direction="270" />
+        </Border.Effect>
+
+        <!-- Smooth fade-in animation (~150ms). -->
+        <Border.Triggers>
+            <EventTrigger RoutedEvent="Loaded">
+                <BeginStoryboard>
+                    <Storyboard>
+                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                         From="0" To="1" Duration="0:0:0.15" />
+                    </Storyboard>
+                </BeginStoryboard>
+            </EventTrigger>
+        </Border.Triggers>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /> <!-- 0 header           -->
+                <RowDefinition Height="Auto" /> <!-- 1 accent line      -->
+                <RowDefinition Height="Auto" /> <!-- 2 info grid        -->
+                <RowDefinition Height="Auto" /> <!-- 3 quick actions    -->
+                <RowDefinition Height="Auto" /> <!-- 4 info text block  -->
+                <RowDefinition Height="Auto" /> <!-- 5 footer text      -->
+                <RowDefinition Height="Auto" /> <!-- 6 footer (refresh + powered by) -->
+            </Grid.RowDefinitions>
+
+            <!-- ========================= 1. HEADER =========================
+                 Title left, logo top-right (default headsinthecloud.blog logo
+                 when no custom logo is configured via ADMX). -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />   <!-- logo slot -->
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding Title}"
+                           Style="{StaticResource HeaderTitleStyle}"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center" />
+
+                <Image Grid.Column="1"
+                       MaxHeight="32"
+                       Stretch="Uniform"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"
+                       Margin="8,0,0,0"
+                       Source="{Binding LogoSource}" />
+            </Grid>
+
+            <!-- Accent line. -->
+            <Border Grid.Row="1"
+                    Height="2"
+                    CornerRadius="1"
+                    Background="{Binding AccentBrush}"
+                    Margin="0,12,0,16" />
+
+            <!-- ===================== 2. INFO ITEMS GRID ====================
+                 2-column layout. ScrollViewer caps the height when more
+                 than 6 tiles are configured so the popup never grows past
+                 the screen height. -->
+            <ScrollViewer Grid.Row="2"
+                          MaxHeight="360"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding InfoItems}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="2" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <v:InfoItemControl AccentBrush="{Binding DataContext.AccentBrush,
+                                                              RelativeSource={RelativeSource AncestorType=Window}}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Margin" Value="0,0,8,8" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- ===================== 3. QUICK ACTIONS ======================
+                 Always rendered; populated with at least one default IT
+                 Support shortcut when no ADMX shortcuts are configured. -->
+            <StackPanel Grid.Row="3" Margin="0,4,0,0">
+                <Border Height="1"
+                        Background="{DynamicResource BorderBrushSubtle}"
+                        Margin="0,4,0,10" />
+                <TextBlock Text="Quick Actions"
+                           Style="{StaticResource LabelTextStyle}"
+                           FontWeight="SemiBold"
+                           Margin="2,0,0,8" />
+                <ItemsControl ItemsSource="{Binding Shortcuts}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <v:ShortcutButton Margin="0,0,8,8"
+                                              AccentBrush="{Binding DataContext.AccentBrush,
+                                                             RelativeSource={RelativeSource AncestorType=Window}}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- ====================== 4. INFO TEXT ==========================
+                 Free-text block configured via the Footer\InfoText policy.
+                 Hidden completely when no text is configured. Supports a
+                 tiny markup: *bold*, | line break, || blank line. -->
+            <StackPanel Grid.Row="4"
+                        Margin="0,4,0,0"
+                        Visibility="{Binding HasInfoText, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}">
+                <Border Height="1"
+                        Background="{DynamicResource BorderBrushSubtle}"
+                        Margin="0,4,0,10" />
+                <ScrollViewer MaxHeight="120"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding InfoTextLines}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <!-- Blank line: 6 px spacer. Real line: TextBlock with Runs. -->
+                                <Grid>
+                                    <Border Height="6"
+                                            Visibility="{Binding IsBlank, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" />
+                                    <ItemsControl ItemsSource="{Binding Runs}"
+                                                  Visibility="{Binding IsBlank, Converter={x:Static vm:BoolToVisibilityConverter.InverseInstance}}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Text}"
+                                                           FontFamily="{StaticResource UiFontFamily}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           TextWrapping="Wrap">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Regular" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsBold}" Value="True">
+                                                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+
+            <!-- ====================== 5. FOOTER TEXT ========================
+                 Single muted line populated by the Footer\Text policy
+                 (registry: HKLM\SOFTWARE\Policies\TrayLight\Footer\Text).
+                 Hidden when the policy is empty/unset so no extra space
+                 is reserved. -->
+            <TextBlock Grid.Row="5"
+                       Text="{Binding FooterText}"
+                       Style="{StaticResource FooterTextStyle}"
+                       HorizontalAlignment="Left"
+                       Margin="0,8,0,0"
+                       Visibility="{Binding FooterText, Converter={x:Static vm:NonEmptyToVisibilityConverter.Instance}}" />
+
+            <!-- ====================== 6. FOOTER ============================
+                 Last-refreshed left, "Powered by headsinthecloud.blog" right. -->
+            <Grid Grid.Row="6" Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding LastSyncDisplay}"
+                           Style="{StaticResource FooterTextStyle}"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"
+                           Visibility="{Binding ShowLastSync, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}" />
+
+                <TextBlock Grid.Column="1"
+                           Style="{StaticResource PoweredByStyle}"
+                           VerticalAlignment="Center">
+                    <Run Text="{Binding PoweredBy, Mode=OneWay}" />
+                    <Hyperlink NavigateUri="{Binding PoweredByLinkUrl}"
+                               RequestNavigate="PoweredBy_RequestNavigate"
+                               TextDecorations="None"
+                               Foreground="{Binding AccentBrush}">
+                        <Run Text="{Binding PoweredByLink, Mode=OneWay}" />
+                    </Hyperlink>
+                </TextBlock>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

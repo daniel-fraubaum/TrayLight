@@ -1,0 +1,29 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+
+  <PropertyGroup>
+    <OutputName>TrayLight</OutputName>
+    <OutputType>Package</OutputType>
+    <Platform>x64</Platform>
+    <!-- ProductVersion can be overridden by CI: dotnet build -p:ProductVersion=1.2.3 -->
+    <ProductVersion Condition="'$(ProductVersion)' == ''">1.1.0</ProductVersion>
+    <TrayLightProject>$(MSBuildThisFileDirectory)..\TrayLight\TrayLight.csproj</TrayLightProject>
+    <TrayLightPublishDir>$(MSBuildThisFileDirectory)obj\$(Configuration)\publish</TrayLightPublishDir>
+    <BundledLogoSource>$(MSBuildThisFileDirectory)..\TrayLight\Assets\logo.png</BundledLogoSource>
+    <BundleLogo Condition="Exists('$(BundledLogoSource)')">1</BundleLogo>
+    <BundleLogo Condition="'$(BundleLogo)' == ''">0</BundleLogo>
+    <DefineConstants>ProductVersion=$(ProductVersion);PublishDir=$(TrayLightPublishDir)\;BundleLogo=$(BundleLogo);BundledLogoSource=$(BundledLogoSource)</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
+  </ItemGroup>
+
+  <!-- Publish the WPF app so we have a complete framework-dependent layout
+       to harvest. We don't take a regular ProjectReference because we want
+       publish output (with all transitive deps) instead of build output. -->
+  <Target Name="PublishTrayLight" BeforeTargets="BeforeBuild">
+    <Exec Command="dotnet publish &quot;$(TrayLightProject)&quot; -c $(Configuration) -r win-x64 --self-contained true -o &quot;$(TrayLightPublishDir)&quot;" />
+  </Target>
+
+</Project>

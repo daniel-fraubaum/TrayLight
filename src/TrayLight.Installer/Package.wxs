@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+  <Package Name="TrayLight"
+           Manufacturer="headsinthecloud.blog"
+           Version="$(ProductVersion)"
+           UpgradeCode="2493D886-5C60-45E0-95BE-7F450BE2C2FC"
+           Scope="perMachine"
+           Compressed="yes">
+
+    <SummaryInformation Description="TrayLight - lightweight Windows System Tray app for IT support" />
+
+    <MajorUpgrade
+      DowngradeErrorMessage="A newer version of [ProductName] is already installed."
+      Schedule="afterInstallInitialize" />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- Add/Remove Programs metadata -->
+    <Icon Id="TrayLightIcon.ico" SourceFile="..\TrayLight\Assets\app-normal.ico" />
+    <Property Id="ARPPRODUCTICON" Value="TrayLightIcon.ico" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/daniel-fraubaum/TrayLight" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/daniel-fraubaum/TrayLight" />
+    <!-- ARPNOMODIFY is supplied by WixUI_InstallDir; do not duplicate. -->
+    <Property Id="ARPNOREPAIR" Value="1" />
+
+    <!-- Install layout: C:\Program Files\TrayLight\ -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="TrayLight">
+        <Directory Id="AssetsFolder" Name="Assets" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="TrayLight" />
+    </StandardDirectory>
+
+    <!-- Auto-harvest the published TrayLight binaries into INSTALLFOLDER. -->
+    <ComponentGroup Id="ProductFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(PublishDir)**" />
+    </ComponentGroup>
+
+    <!-- Optional pre-bundled logo. The Assets folder is always created so
+         policy-deployed paths like C:\Program Files\TrayLight\Assets\logo.png
+         work even when the MSI ships without a logo. The logo file itself
+         is only included when src\TrayLight\Assets\logo.png exists at build
+         time, allowing customers to embed their own logo into the MSI. -->
+    <Component Id="AssetsFolderMarker" Directory="AssetsFolder" Guid="C4D5E6F7-3333-4444-5555-666677778888">
+      <CreateFolder />
+      <RegistryValue Root="HKLM" Key="Software\TrayLight\Install" Name="AssetsFolder" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+    <?if $(BundleLogo) = 1 ?>
+    <Component Id="BundledLogo" Directory="AssetsFolder" Guid="D5E6F7A8-4444-5555-6666-777788889999">
+      <File Id="LogoPng" Source="$(BundledLogoSource)" KeyPath="yes" Name="logo.png" />
+    </Component>
+    <?endif ?>
+
+    <!-- Start Menu shortcut -->
+    <Component Id="StartMenuShortcut" Directory="ApplicationProgramsFolder" Guid="A2B3C4D5-1111-2222-3333-444455556666">
+      <Shortcut Id="ApplicationStartMenuShortcut"
+                Name="TrayLight"
+                Description="TrayLight"
+                Target="[INSTALLFOLDER]TrayLight.exe"
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="TrayLightIcon.ico" />
+      <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\TrayLight" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+
+    <!-- Auto-start at logon (machine-wide HKLM Run key) -->
+    <Component Id="AutoStartRegistry" Directory="INSTALLFOLDER" Guid="B3C4D5E6-2222-3333-4444-555566667777">
+      <RegistryValue Root="HKLM"
+                     Key="Software\Microsoft\Windows\CurrentVersion\Run"
+                     Name="TrayLight"
+                     Type="string"
+                     Value="&quot;[INSTALLFOLDER]TrayLight.exe&quot;"
+                     KeyPath="yes" />
+    </Component>
+
+    <Feature Id="Main" Title="TrayLight" Level="1">
+      <ComponentGroupRef Id="ProductFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="AutoStartRegistry" />
+      <ComponentRef Id="AssetsFolderMarker" />
+      <?if $(BundleLogo) = 1 ?>
+      <ComponentRef Id="BundledLogo" />
+      <?endif ?>
+    </Feature>
+
+    <!-- Setup wizard (Welcome -> License -> Install Dir -> Install -> Finish).
+         Skipped entirely for silent installs (msiexec /qn). -->
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch TrayLight" />
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+
+    <ui:WixUI Id="WixUI_InstallDir" />
+
+    <!-- "Launch TrayLight" on the Finish page. Uses WixShellExec so the app
+         is started with the user's normal token rather than the elevated
+         installer token. -->
+    <Property Id="WixShellExecTarget" Value="[INSTALLFOLDER]TrayLight.exe" />
+    <CustomAction Id="LaunchApplication"
+                  BinaryRef="Wix4UtilCA_X64"
+                  DllEntry="WixShellExec"
+                  Impersonate="yes" />
+
+    <UI>
+      <Publish Dialog="ExitDialog"
+               Control="Finish"
+               Event="DoAction"
+               Value="LaunchApplication"
+               Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed" />
+    </UI>
+
+  </Package>
+
+</Wix>

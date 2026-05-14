@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="utf-8"?>
+<policyDefinitions revision="1.0" schemaVersion="1.0"
+                   xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://schemas.microsoft.com/GroupPolicy/2006/07/PolicyDefinitions">
+  <policyNamespaces>
+    <target prefix="traylight" namespace="TrayLight.Policies" />
+  </policyNamespaces>
+
+  <resources minRequiredRevision="1.0" />
+
+  <supportedOn>
+    <definitions>
+      <definition name="SUPPORTED_TrayLight" displayName="$(string.SUPPORTED_TrayLight)" />
+    </definitions>
+  </supportedOn>
+
+  <categories>
+    <category name="TrayLight" displayName="$(string.Cat_TrayLight)" />
+    <category name="Branding" displayName="$(string.Cat_Branding)">
+      <parentCategory ref="TrayLight" />
+    </category>
+    <category name="Behavior" displayName="$(string.Cat_Behavior)">
+      <parentCategory ref="TrayLight" />
+    </category>
+    <category name="Footer" displayName="$(string.Cat_Footer)">
+      <parentCategory ref="TrayLight" />
+    </category>
+    <category name="Logging" displayName="$(string.Cat_Logging)">
+      <parentCategory ref="TrayLight" />
+    </category>
+    <category name="InfoItems" displayName="$(string.Cat_InfoItems)">
+      <parentCategory ref="TrayLight" />
+    </category>
+    <category name="Shortcuts" displayName="$(string.Cat_Shortcuts)">
+      <parentCategory ref="TrayLight" />
+    </category>
+  </categories>
+
+  <policies>
+
+    <!-- ===== Branding ===== -->
+    <policy name="Branding_Title" class="Machine" displayName="$(string.Pol_Branding_Title)"
+            explainText="$(string.Pol_Branding_Title_Help)" presentation="$(presentation.Pol_Branding_Title)"
+            key="SOFTWARE\Policies\TrayLight\Branding">
+      <parentCategory ref="Branding" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements><text id="Branding_Title_Value" valueName="Title" maxLength="1023" /></elements>
+    </policy>
+
+    <policy name="Branding_AccentColor" class="Machine" displayName="$(string.Pol_Branding_AccentColor)"
+            explainText="$(string.Pol_Branding_AccentColor_Help)" presentation="$(presentation.Pol_Branding_AccentColor)"
+            key="SOFTWARE\Policies\TrayLight\Branding">
+      <parentCategory ref="Branding" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements><text id="Branding_AccentColor_Value" valueName="AccentColor" maxLength="1023" /></elements>
+    </policy>
+
+    <policy name="Branding_Logo" class="Machine" displayName="$(string.Pol_Branding_Logo)"
+            explainText="$(string.Pol_Branding_Logo_Help)" presentation="$(presentation.Pol_Branding_Logo)"
+            key="SOFTWARE\Policies\TrayLight\Branding">
+      <parentCategory ref="Branding" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements><text id="Branding_Logo_Value" valueName="Logo" maxLength="1023" /></elements>
+    </policy>
+
+    <policy name="Branding_TrayIcon" class="Machine" displayName="$(string.Pol_Branding_TrayIcon)"
+            explainText="$(string.Pol_Branding_TrayIcon_Help)" presentation="$(presentation.Pol_Branding_TrayIcon)"
+            key="SOFTWARE\Policies\TrayLight\Branding">
+      <parentCategory ref="Branding" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements><text id="Branding_TrayIcon_Value" valueName="TrayIcon" maxLength="1023" /></elements>
+    </policy>
+
+    <policy name="Branding_CompanyName" class="Machine" displayName="$(string.Pol_Branding_CompanyName)"
+            explainText="$(string.Pol_Branding_CompanyName_Help)" presentation="$(presentation.Pol_Branding_CompanyName)"
+            key="SOFTWARE\Policies\TrayLight\Branding">
+      <parentCategory ref="Branding" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements><text id="Branding_CompanyName_Value" valueName="CompanyName" maxLength="1023" /></elements>
+    </policy>
+
+    <!-- ===== Behavior ===== -->
+    <policy name="Behavior_AutoStart" class="Machine" displayName="$(string.Pol_Behavior_AutoStart)"
+            explainText="$(string.Pol_Behavior_AutoStart_Help)"
+            key="SOFTWARE\Policies\TrayLight\Behavior" valueName="AutoStart">
+      <parentCategory ref="Behavior" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+
+    <policy name="Behavior_RefreshIntervalMinutes" class="Machine" displayName="$(string.Pol_Behavior_RefreshIntervalMinutes)"
+            explainText="$(string.Pol_Behavior_RefreshIntervalMinutes_Help)" presentation="$(presentation.Pol_Behavior_RefreshIntervalMinutes)"
+            key="SOFTWARE\Policies\TrayLight\Behavior">
+      <parentCategory ref="Behavior" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements><decimal id="Behavior_RefreshIntervalMinutes_Value" valueName="RefreshIntervalMinutes" minValue="0" maxValue="1440" /></elements>
+    </policy>
+
+    <policy name="Behavior_ShowWelcomeScreen" class="Machine" displayName="$(string.Pol_Behavior_ShowWelcomeScreen)"
+            explainText="$(string.Pol_Behavior_ShowWelcomeScreen_Help)"
+            key="SOFTWARE\Policies\TrayLight\Behavior" valueName="ShowWelcomeScreen">
+      <parentCategory ref="Behavior" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+
+    <policy name="Behavior_NotifyOnUpdates" class="Machine" displayName="$(string.Pol_Behavior_NotifyOnUpdates)"
+            explainText="$(string.Pol_Behavior_NotifyOnUpdates_Help)"
+            key="SOFTWARE\Policies\TrayLight\Behavior" valueName="NotifyOnUpdates">
+      <parentCategory ref="Behavior" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+
+    <policy name="Behavior_RebootWarningDays" class="Machine" displayName="$(string.Pol_Behavior_RebootWarningDays)"
+            explainText="$(string.Pol_Behavior_RebootWarningDays_Help)" presentation="$(presentation.Pol_Behavior_RebootWarningDays)"
+            key="SOFTWARE\Policies\TrayLight\Behavior">
+      <parentCategory ref="Behavior" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements><decimal id="Behavior_RebootWarningDays_Value" valueName="RebootWarningDays" minValue="0" maxValue="365" /></elements>
+    </policy>
+
+    <!-- ===== Footer ===== -->
+    <policy name="Footer_Text" class="Machine" displayName="$(string.Pol_Footer_Text)"
+            explainText="$(string.Pol_Footer_Text_Help)" presentation="$(presentation.Pol_Footer_Text)"
+            key="SOFTWARE\Policies\TrayLight\Footer">
+      <parentCategory ref="Footer" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements><text id="Footer_Text_Value" valueName="Text" maxLength="1023" /></elements>
+    </policy>
+
+    <policy name="Footer_ShowLastSync" class="Machine" displayName="$(string.Pol_Footer_ShowLastSync)"
+            explainText="$(string.Pol_Footer_ShowLastSync_Help)"
+            key="SOFTWARE\Policies\TrayLight\Footer" valueName="ShowLastSync">
+      <parentCategory ref="Footer" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+
+    <policy name="Footer_InfoText" class="Machine" displayName="$(string.Pol_Footer_InfoText)"
+            explainText="$(string.Pol_Footer_InfoText_Help)" presentation="$(presentation.Pol_Footer_InfoText)"
+            key="SOFTWARE\Policies\TrayLight\Footer">
+      <parentCategory ref="Footer" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements><text id="Footer_InfoText_Value" valueName="InfoText" maxLength="1023" /></elements>
+    </policy>
+
+    <!-- ===== Logging ===== -->
+    <policy name="Logging_EnableEventLog" class="Machine" displayName="$(string.Pol_Logging_EventLog)"
+            explainText="$(string.Pol_Logging_EventLog_Help)"
+            key="SOFTWARE\Policies\TrayLight\Logging" valueName="EnableEventLog">
+      <parentCategory ref="Logging" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+
+    <policy name="Logging_EnableFileLog" class="Machine" displayName="$(string.Pol_Logging_FileLog)"
+            explainText="$(string.Pol_Logging_FileLog_Help)"
+            key="SOFTWARE\Policies\TrayLight\Logging" valueName="EnableFileLog">
+      <parentCategory ref="Logging" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+
+    <policy name="Logging_RetentionDays" class="Machine" displayName="$(string.Pol_Logging_Retention)"
+            explainText="$(string.Pol_Logging_Retention_Help)" presentation="$(presentation.Pol_Logging_RetentionDays)"
+            key="SOFTWARE\Policies\TrayLight\Logging">
+      <parentCategory ref="Logging" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements><decimal id="Logging_RetentionDays_Value" valueName="LogRetentionDays" minValue="1" maxValue="365" /></elements>
+    </policy>
+
+    <policy name="Logging_MinimumLevel" class="Machine" displayName="$(string.Pol_Logging_Level)"
+            explainText="$(string.Pol_Logging_Level_Help)" presentation="$(presentation.Pol_Logging_MinimumLevel)"
+            key="SOFTWARE\Policies\TrayLight\Logging">
+      <parentCategory ref="Logging" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <enum id="Logging_MinimumLevel_Value" valueName="MinimumLevel">
+          <item displayName="$(string.LogLevel_Trace)"><value><string>Trace</string></value></item>
+          <item displayName="$(string.LogLevel_Debug)"><value><string>Debug</string></value></item>
+          <item displayName="$(string.LogLevel_Information)"><value><string>Information</string></value></item>
+          <item displayName="$(string.LogLevel_Warning)"><value><string>Warning</string></value></item>
+          <item displayName="$(string.LogLevel_Error)"><value><string>Error</string></value></item>
+          <item displayName="$(string.LogLevel_Critical)"><value><string>Critical</string></value></item>
+        </enum>
+      </elements>
+    </policy>
+
+    <!-- ===== Info Items =====
+         Each tile is a single policy that exposes Enabled / Position / Title /
+         Icon / ShowNotificationBadge as elements. Restructured from a pure
+         on/off policy so the admin can configure presentation in the same
+         dialog. Set "Enabled" to 1 to show the tile. -->
+    <policy name="InfoItem_ComputerName" class="Machine" displayName="$(string.Pol_InfoItem_ComputerName)"
+            explainText="$(string.Pol_InfoItem_Help)" presentation="$(presentation.Pol_InfoItem_ComputerName)"
+            key="SOFTWARE\Policies\TrayLight\InfoItems\ComputerName">
+      <parentCategory ref="InfoItems" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <decimal id="InfoItem_ComputerName_Position" valueName="Position"              minValue="0" maxValue="7" />
+        <text    id="InfoItem_ComputerName_Title"    valueName="Title" maxLength="1023" />
+        <text    id="InfoItem_ComputerName_Icon"     valueName="Icon" maxLength="1023" />
+      </elements>
+    </policy>
+
+    <policy name="InfoItem_OsVersion" class="Machine" displayName="$(string.Pol_InfoItem_OsVersion)"
+            explainText="$(string.Pol_InfoItem_Help)" presentation="$(presentation.Pol_InfoItem_OsVersion)"
+            key="SOFTWARE\Policies\TrayLight\InfoItems\OsVersion">
+      <parentCategory ref="InfoItems" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <decimal id="InfoItem_OsVersion_Position" valueName="Position"              minValue="0" maxValue="7" />
+        <text    id="InfoItem_OsVersion_Title"    valueName="Title" maxLength="1023" />
+        <text    id="InfoItem_OsVersion_Icon"     valueName="Icon" maxLength="1023" />
+      </elements>
+    </policy>
+
+    <policy name="InfoItem_LastReboot" class="Machine" displayName="$(string.Pol_InfoItem_LastReboot)"
+            explainText="$(string.Pol_InfoItem_Help)" presentation="$(presentation.Pol_InfoItem_LastReboot)"
+            key="SOFTWARE\Policies\TrayLight\InfoItems\LastReboot">
+      <parentCategory ref="InfoItems" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <decimal id="InfoItem_LastReboot_Position" valueName="Position"              minValue="0" maxValue="7" />
+        <text    id="InfoItem_LastReboot_Title"    valueName="Title" maxLength="1023" />
+        <text    id="InfoItem_LastReboot_Icon"     valueName="Icon" maxLength="1023" />
+        <decimal id="InfoItem_LastReboot_Badge"    valueName="ShowNotificationBadge" minValue="0" maxValue="1" />
+      </elements>
+    </policy>
+
+    <policy name="InfoItem_StorageUsed" class="Machine" displayName="$(string.Pol_InfoItem_StorageUsed)"
+            explainText="$(string.Pol_InfoItem_Help)" presentation="$(presentation.Pol_InfoItem_StorageUsed)"
+            key="SOFTWARE\Policies\TrayLight\InfoItems\StorageUsed">
+      <parentCategory ref="InfoItems" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <decimal id="InfoItem_StorageUsed_Position" valueName="Position"              minValue="0" maxValue="7" />
+        <text    id="InfoItem_StorageUsed_Title"    valueName="Title" maxLength="1023" />
+        <text    id="InfoItem_StorageUsed_Icon"     valueName="Icon" maxLength="1023" />
+        <decimal id="InfoItem_StorageUsed_Badge"    valueName="ShowNotificationBadge" minValue="0" maxValue="1" />
+        <decimal id="InfoItem_StorageUsed_Limit"    valueName="StorageLimit"          minValue="0" maxValue="100" />
+      </elements>
+    </policy>
+
+    <policy name="InfoItem_NetworkInfo" class="Machine" displayName="$(string.Pol_InfoItem_NetworkInfo)"
+            explainText="$(string.Pol_InfoItem_Help)" presentation="$(presentation.Pol_InfoItem_NetworkInfo)"
+            key="SOFTWARE\Policies\TrayLight\InfoItems\NetworkInfo">
+      <parentCategory ref="InfoItems" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <decimal id="InfoItem_NetworkInfo_Position" valueName="Position"              minValue="0" maxValue="7" />
+        <text    id="InfoItem_NetworkInfo_Title"    valueName="Title" maxLength="1023" />
+        <text    id="InfoItem_NetworkInfo_Icon"     valueName="Icon" maxLength="1023" />
+      </elements>
+    </policy>
+
+    <policy name="InfoItem_SerialNumber" class="Machine" displayName="$(string.Pol_InfoItem_SerialNumber)"
+            explainText="$(string.Pol_InfoItem_Help)" presentation="$(presentation.Pol_InfoItem_SerialNumber)"
+            key="SOFTWARE\Policies\TrayLight\InfoItems\SerialNumber">
+      <parentCategory ref="InfoItems" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <decimal id="InfoItem_SerialNumber_Position" valueName="Position"              minValue="0" maxValue="7" />
+        <text    id="InfoItem_SerialNumber_Title"    valueName="Title" maxLength="1023" />
+        <text    id="InfoItem_SerialNumber_Icon"     valueName="Icon" maxLength="1023" />
+      </elements>
+    </policy>
+
+    <policy name="InfoItem_IntuneSync" class="Machine" displayName="$(string.Pol_InfoItem_IntuneSync)"
+            explainText="$(string.Pol_InfoItem_Help)" presentation="$(presentation.Pol_InfoItem_IntuneSync)"
+            key="SOFTWARE\Policies\TrayLight\InfoItems\IntuneSync">
+      <parentCategory ref="InfoItems" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <decimal id="InfoItem_IntuneSync_Position" valueName="Position"              minValue="0" maxValue="7" />
+        <text    id="InfoItem_IntuneSync_Title"    valueName="Title" maxLength="1023" />
+        <text    id="InfoItem_IntuneSync_Icon"     valueName="Icon" maxLength="1023" />
+      </elements>
+    </policy>
+
+    <!-- ===== Shortcuts =====
+         Master toggle plus six individually configurable slots. Each slot lives
+         under Shortcuts\<n>; ActionType is one of "url", "app", or "command".
+         Position controls grid order (0-5). -->
+    <policy name="Shortcuts_Allow" class="Machine" displayName="$(string.Pol_Shortcuts_Allow)"
+            explainText="$(string.Pol_Shortcuts_Allow_Help)"
+            key="SOFTWARE\Policies\TrayLight\Shortcuts" valueName="AllowUserShortcuts">
+      <parentCategory ref="Shortcuts" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+
+    <policy name="Shortcut_1" class="Machine" displayName="$(string.Pol_Shortcut_1)"
+            explainText="$(string.Pol_Shortcut_Help)" presentation="$(presentation.Pol_Shortcut_1)"
+            key="SOFTWARE\Policies\TrayLight\Shortcuts\1">
+      <parentCategory ref="Shortcuts" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <text    id="Shortcut_1_Title"      valueName="Title" maxLength="1023" />
+        <text    id="Shortcut_1_Subtitle"   valueName="Subtitle" maxLength="1023" />
+        <text    id="Shortcut_1_ActionType" valueName="ActionType" maxLength="1023" />
+        <text    id="Shortcut_1_Action"     valueName="Action" maxLength="1023" />
+        <text    id="Shortcut_1_Icon"       valueName="Icon" maxLength="1023" />
+        <decimal id="Shortcut_1_Position"   valueName="Position" minValue="0" maxValue="5" />
+      </elements>
+    </policy>
+
+    <policy name="Shortcut_2" class="Machine" displayName="$(string.Pol_Shortcut_2)"
+            explainText="$(string.Pol_Shortcut_Help)" presentation="$(presentation.Pol_Shortcut_2)"
+            key="SOFTWARE\Policies\TrayLight\Shortcuts\2">
+      <parentCategory ref="Shortcuts" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <text    id="Shortcut_2_Title"      valueName="Title" maxLength="1023" />
+        <text    id="Shortcut_2_Subtitle"   valueName="Subtitle" maxLength="1023" />
+        <text    id="Shortcut_2_ActionType" valueName="ActionType" maxLength="1023" />
+        <text    id="Shortcut_2_Action"     valueName="Action" maxLength="1023" />
+        <text    id="Shortcut_2_Icon"       valueName="Icon" maxLength="1023" />
+        <decimal id="Shortcut_2_Position"   valueName="Position" minValue="0" maxValue="5" />
+      </elements>
+    </policy>
+
+    <policy name="Shortcut_3" class="Machine" displayName="$(string.Pol_Shortcut_3)"
+            explainText="$(string.Pol_Shortcut_Help)" presentation="$(presentation.Pol_Shortcut_3)"
+            key="SOFTWARE\Policies\TrayLight\Shortcuts\3">
+      <parentCategory ref="Shortcuts" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <text    id="Shortcut_3_Title"      valueName="Title" maxLength="1023" />
+        <text    id="Shortcut_3_Subtitle"   valueName="Subtitle" maxLength="1023" />
+        <text    id="Shortcut_3_ActionType" valueName="ActionType" maxLength="1023" />
+        <text    id="Shortcut_3_Action"     valueName="Action" maxLength="1023" />
+        <text    id="Shortcut_3_Icon"       valueName="Icon" maxLength="1023" />
+        <decimal id="Shortcut_3_Position"   valueName="Position" minValue="0" maxValue="5" />
+      </elements>
+    </policy>
+
+    <policy name="Shortcut_4" class="Machine" displayName="$(string.Pol_Shortcut_4)"
+            explainText="$(string.Pol_Shortcut_Help)" presentation="$(presentation.Pol_Shortcut_4)"
+            key="SOFTWARE\Policies\TrayLight\Shortcuts\4">
+      <parentCategory ref="Shortcuts" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <text    id="Shortcut_4_Title"      valueName="Title" maxLength="1023" />
+        <text    id="Shortcut_4_Subtitle"   valueName="Subtitle" maxLength="1023" />
+        <text    id="Shortcut_4_ActionType" valueName="ActionType" maxLength="1023" />
+        <text    id="Shortcut_4_Action"     valueName="Action" maxLength="1023" />
+        <text    id="Shortcut_4_Icon"       valueName="Icon" maxLength="1023" />
+        <decimal id="Shortcut_4_Position"   valueName="Position" minValue="0" maxValue="5" />
+      </elements>
+    </policy>
+
+    <policy name="Shortcut_5" class="Machine" displayName="$(string.Pol_Shortcut_5)"
+            explainText="$(string.Pol_Shortcut_Help)" presentation="$(presentation.Pol_Shortcut_5)"
+            key="SOFTWARE\Policies\TrayLight\Shortcuts\5">
+      <parentCategory ref="Shortcuts" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <text    id="Shortcut_5_Title"      valueName="Title" maxLength="1023" />
+        <text    id="Shortcut_5_Subtitle"   valueName="Subtitle" maxLength="1023" />
+        <text    id="Shortcut_5_ActionType" valueName="ActionType" maxLength="1023" />
+        <text    id="Shortcut_5_Action"     valueName="Action" maxLength="1023" />
+        <text    id="Shortcut_5_Icon"       valueName="Icon" maxLength="1023" />
+        <decimal id="Shortcut_5_Position"   valueName="Position" minValue="0" maxValue="5" />
+      </elements>
+    </policy>
+
+    <policy name="Shortcut_6" class="Machine" displayName="$(string.Pol_Shortcut_6)"
+            explainText="$(string.Pol_Shortcut_Help)" presentation="$(presentation.Pol_Shortcut_6)"
+            key="SOFTWARE\Policies\TrayLight\Shortcuts\6">
+      <parentCategory ref="Shortcuts" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements>
+        <text    id="Shortcut_6_Title"      valueName="Title" maxLength="1023" />
+        <text    id="Shortcut_6_Subtitle"   valueName="Subtitle" maxLength="1023" />
+        <text    id="Shortcut_6_ActionType" valueName="ActionType" maxLength="1023" />
+        <text    id="Shortcut_6_Action"     valueName="Action" maxLength="1023" />
+        <text    id="Shortcut_6_Icon"       valueName="Icon" maxLength="1023" />
+        <decimal id="Shortcut_6_Position"   valueName="Position" minValue="0" maxValue="5" />
+      </elements>
+    </policy>
+
+  </policies>
+</policyDefinitions>

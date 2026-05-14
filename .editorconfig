@@ -1,0 +1,86 @@
+root = true
+
+# All files
+[*]
+charset                  = utf-8
+end_of_line              = crlf
+indent_style             = space
+indent_size              = 4
+insert_final_newline     = true
+trim_trailing_whitespace = true
+
+[*.{yml,yaml,json,xml,csproj,wapproj,props,targets,appxmanifest,xaml}]
+indent_size = 2
+
+[*.{md}]
+trim_trailing_whitespace = false
+
+# C# files
+[*.cs]
+# Nullable + warnings as errors for analyzer noise
+dotnet_analyzer_diagnostic.severity = suggestion
+
+# Organize usings
+dotnet_sort_system_directives_first                          = true
+dotnet_separate_import_directive_groups                      = false
+dotnet_style_namespace_match_folder                          = true:suggestion
+csharp_using_directive_placement                             = outside_namespace:warning
+
+# var preferences
+csharp_style_var_for_built_in_types                          = true:suggestion
+csharp_style_var_when_type_is_apparent                       = true:suggestion
+csharp_style_var_elsewhere                                   = true:suggestion
+
+# Modern C#
+csharp_prefer_braces                                         = true:silent
+csharp_style_namespace_declarations                          = file_scoped:warning
+csharp_style_expression_bodied_members                       = when_on_single_line:suggestion
+csharp_style_expression_bodied_constructors                  = when_on_single_line:suggestion
+csharp_style_pattern_matching_over_is_with_cast_check        = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check        = true:suggestion
+csharp_style_prefer_switch_expression                        = true:suggestion
+csharp_style_prefer_pattern_matching                         = true:suggestion
+csharp_prefer_simple_using_statement                         = true:suggestion
+csharp_style_prefer_primary_constructors                     = false:suggestion
+
+# this. and Me.
+dotnet_style_qualification_for_field                         = false:warning
+dotnet_style_qualification_for_property                      = false:warning
+dotnet_style_qualification_for_method                        = false:warning
+dotnet_style_qualification_for_event                         = false:warning
+
+# Predefined types
+dotnet_style_predefined_type_for_locals_parameters_members   = true:warning
+dotnet_style_predefined_type_for_member_access               = true:warning
+
+# Naming: private fields _camelCase
+dotnet_naming_rule.private_fields_underscore.symbols           = private_fields
+dotnet_naming_rule.private_fields_underscore.style             = underscore_camel
+dotnet_naming_rule.private_fields_underscore.severity          = warning
+dotnet_naming_symbols.private_fields.applicable_kinds          = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities= private
+dotnet_naming_style.underscore_camel.required_prefix           = _
+dotnet_naming_style.underscore_camel.capitalization            = camel_case
+
+# Naming: constants PascalCase
+dotnet_naming_rule.constants_pascal.symbols                    = constants
+dotnet_naming_rule.constants_pascal.style                      = pascal
+dotnet_naming_rule.constants_pascal.severity                   = warning
+dotnet_naming_symbols.constants.applicable_kinds               = field
+dotnet_naming_symbols.constants.required_modifiers             = const
+dotnet_naming_style.pascal.capitalization                      = pascal_case
+
+# StyleCop: silence rules that fight our existing layout choices
+dotnet_diagnostic.SA0001.severity = none   # XML doc comments not required everywhere
+dotnet_diagnostic.SA1101.severity = none   # Prefix local calls with this
+dotnet_diagnostic.SA1200.severity = none   # Using directives must be inside namespace
+dotnet_diagnostic.SA1309.severity = none   # Field names must not begin with underscore
+dotnet_diagnostic.SA1413.severity = none   # Trailing comma in initializer
+dotnet_diagnostic.SA1600.severity = none   # Elements should be documented
+dotnet_diagnostic.SA1601.severity = none   # Partial elements should be documented
+dotnet_diagnostic.SA1633.severity = none   # File header missing
+dotnet_diagnostic.SA1652.severity = none   # Enable XML documentation output
+
+# WPF / generated code: don't lint
+[*.{g.cs,g.i.cs,Designer.cs}]
+generated_code = true

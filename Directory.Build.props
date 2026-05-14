@@ -1,0 +1,29 @@
+<Project>
+
+  <!--
+    Repo-wide MSBuild defaults. Picked up automatically by every csproj /
+    wapproj under this folder.
+  -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Minimum</AnalysisMode>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!--
+    StyleCop analyzers. Skipped for the wapproj (it has no C# sources) and
+    for any project that opts out via <SkipStyleCop>true</SkipStyleCop>.
+  -->
+  <ItemGroup Condition="'$(MSBuildProjectExtension)' == '.csproj' AND '$(SkipStyleCop)' != 'true'">
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
