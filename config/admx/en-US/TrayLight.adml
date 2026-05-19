@@ -46,7 +46,7 @@
       <string id="Pol_Footer_ShowLastSync">Show last-sync timestamp</string>
       <string id="Pol_Footer_ShowLastSync_Help">Display the last successful configuration reload time in the footer.</string>
       <string id="Pol_Footer_InfoText">Info text block</string>
-      <string id="Pol_Footer_InfoText_Help">Free-text information block shown above the footer. Use * to wrap bold text (e.g. *Office Hours*). Use | for line breaks. Use || for blank lines between sections.&#xD;&#xA;&#xD;&#xA;Example: *IT-Office Hours* | Mon-Thu: 07:00-17:00 | Fri: 07:00-15:00 || *IT-Hotline* | +43 1 234 5678</string>
+      <string id="Pol_Footer_InfoText_Help">Free-text information block shown above the footer. Use * to wrap bold text (e.g. *Office Hours*). Use | for line breaks. Use || for blank lines between sections.  Example: *IT-Office Hours* | Mon-Thu: 07:00-17:00 | Fri: 07:00-15:00 || *IT-Hotline* | +43 1 234 5678</string>
 
       <!-- Logging -->
       <string id="Pol_Logging_EventLog">Write to Windows Event Log</string>
@@ -77,7 +77,7 @@
       <!-- Shortcuts -->
       <string id="Pol_Shortcuts_Allow">Allow shortcut tiles</string>
       <string id="Pol_Shortcuts_Allow_Help">Master toggle for all shortcut tiles. Disable to hide every shortcut regardless of per-slot configuration.</string>
-      <string id="Pol_Shortcut_Help">Configure a shortcut button in the Quick Actions section.&#xD;&#xA;&#xD;&#xA;Title: Button label shown to the user (e.g. IT Helpdesk)&#xD;&#xA;Subtitle: Optional secondary text shown on hover (e.g. Create a support ticket)&#xD;&#xA;&#xD;&#xA;ActionType - what happens when clicked:&#xD;&#xA;  url = Opens a website or link in the default browser (e.g. https://helpdesk.contoso.com)&#xD;&#xA;  app = Launches an installed application (e.g. C:\Program Files\TeamViewer\TeamViewer.exe)&#xD;&#xA;  command = Runs a PowerShell command silently (e.g. powershell.exe -WindowStyle Hidden -Command Start-Process 'CompanyPortal:')&#xD;&#xA;&#xD;&#xA;Icon: Segoe Fluent Icons code. Common icons:&#xD;&#xA;  E8F2 = Headset (support/helpdesk)&#xD;&#xA;  E8AB = Remote desktop&#xD;&#xA;  E774 = Globe (website/intranet)&#xD;&#xA;  E779 = Phone&#xD;&#xA;  E715 = Mail&#xD;&#xA;  E8A7 = Download&#xD;&#xA;  E946 = Settings&#xD;&#xA;&#xD;&#xA;Position: Order in the grid (0 = first, 5 = last)</string>
+      <string id="Pol_Shortcut_Help">Configure a shortcut button in the Quick Actions section.  Title: Button label shown to the user (e.g. IT Helpdesk) Subtitle: Optional secondary text shown on hover (e.g. Create a support ticket)  ActionType - what happens when clicked:   url = Opens a website or link in the default browser (e.g. https://helpdesk.contoso.com)   app = Launches an installed application (e.g. C:\Program Files\TeamViewer\TeamViewer.exe)   command = Runs a PowerShell command silently (e.g. powershell.exe -WindowStyle Hidden -Command Start-Process 'CompanyPortal:')  Icon: Segoe Fluent Icons code. Common icons:   E8F2 = Headset (support/helpdesk)   E8AB = Remote desktop   E774 = Globe (website/intranet)   E779 = Phone   E715 = Mail   E8A7 = Download   E946 = Settings  Position: Order in the grid (0 = first, 5 = last)</string>
       <string id="Pol_Shortcut_1">Shortcut slot 1</string>
       <string id="Pol_Shortcut_2">Shortcut slot 2</string>
       <string id="Pol_Shortcut_3">Shortcut slot 3</string>
