@@ -85,6 +85,16 @@ Set `RebootWarningDays = 0` to disable the reboot warning entirely. All
 other tiles (Computer Name, OS Version, Network, Identity, Intune Sync,
 Serial Number) are informational and never raise warnings.
 
+### Tray icon visibility
+
+After installation, the TrayLight icon may appear in the taskbar overflow
+area (the `^` arrow). To keep it permanently visible, drag the icon from
+the overflow onto the main taskbar. This is a one-time action per user —
+Windows remembers the preference. This is a Windows limitation that
+affects all system tray applications and cannot be controlled via policy.
+Consider informing end users about this step via email or your internal IT
+knowledge base, especially during initial rollout.
+
 ## 3. Configure TrayLight via ADMX
 
 TrayLight is configured exclusively through ADMX-based policies. The

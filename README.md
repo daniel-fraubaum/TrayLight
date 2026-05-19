@@ -74,6 +74,14 @@ The `Branding\Logo` policy accepts either a URL or a local file path:
   package and is installed to `C:\Program Files\TrayLight\Assets\logo.png`.
   Set `Logo = C:\Program Files\TrayLight\Assets\logo.png` in policy.
 
+## Tray icon visibility
+
+After installation, the TrayLight icon may appear in the taskbar overflow
+area (the `^` arrow). To keep it permanently visible, drag the icon from
+the overflow onto the main taskbar. This is a one-time action per user —
+Windows remembers the preference. This is a Windows limitation that
+affects all system tray applications and cannot be controlled via policy.
+
 ## Getting Started
 
 **Prerequisites**
