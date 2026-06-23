@@ -25,15 +25,19 @@
   - **Intune Sync** — time since last MDM check-in; click to trigger a sync
 - **Additional tiles available via ADMX** (not enabled by default):
   - **Network Info** — active SSID/Ethernet + IPv4
-  - **Entra ID Status** — join state from `dsregcmd /status`
-  - **Intune Compliance** — enrollment status
 - Up to **6 configurable Quick Action shortcut buttons** (URL / App / Command),
   each with its own title, subtitle, icon and position via ADMX
+- **Dynamic placeholders** in shortcut actions — embed `{{ComputerName}}`,
+  `{{OsVersion}}`, `{{SerialNumber}}`, `{{IntuneSync}}` and more; replaced with
+  live device values at click-time (auto URL-encoded for mailto/https links)
 - **Customizable info text block** under the Quick Actions — show office
   hours, helpdesk hotline, on-call info, etc. Tiny inline markup
   (`*bold*`, `|` line break, `||` blank line) configured via a single
   ADMX policy.
 - Toast notifications for warnings raised by info tiles
+- **Multi-language UI** — auto-detects the Windows display language; ships with
+  English, German and French, and any other language can be supplied entirely
+  via ADMX text overrides (see [Localization](#localization))
 - Light / Dark theme follows the Windows system setting
 - WPF with drop-shadow on Windows 11
 - Welcome screen on first launch
@@ -61,6 +65,13 @@ startup.
 
 For the full Intune walkthrough see [`docs/INTUNE-DEPLOYMENT.md`](docs/INTUNE-DEPLOYMENT.md).
 
+> **ADMX text doubles as a localization mechanism.** Every visible string
+> (tile titles, header/branding title, shortcut labels, footer and info text)
+> can be overridden via policy, and those overrides always take precedence over
+> the auto-detected UI language. So for a language that isn't built in, set the
+> text in your language via Intune Settings Catalog — no code change required.
+> See [Localization](#localization) for the full priority order.
+
 ### Customer logo
 
 The `Branding\Logo` policy accepts either a URL or a local file path:
@@ -86,7 +97,7 @@ affects all system tray applications and cannot be controlled via policy.
 
 **Prerequisites**
 
-- .NET 8 SDK (with the *Windows Desktop* workload)
+- .NET 10 SDK (with the *Windows Desktop* workload)
 - Windows 11 SDK `10.0.26100`
 
 **Build & run**
@@ -111,7 +122,7 @@ dotnet build src/TrayLight.Installer/TrayLight.Installer.wixproj -c Release
 
 **Installation**
 
-> The MSI is **self-contained** — it ships with its own .NET 8 runtime, so
+> The MSI is **self-contained** — it ships with its own .NET 10 runtime, so
 > no .NET installation is required on the target machine. The package size
 > is roughly 70 MB as a result.
 
@@ -140,6 +151,55 @@ See [`docs/INTUNE-DEPLOYMENT.md`](docs/INTUNE-DEPLOYMENT.md) for:
 - Classic on-prem **Group Policy** deployment (Central Store + GPSI for
   the MSI, Administrative Templates for configuration)
 - Warning thresholds (`StorageLimit`, `RebootWarningDays`)
+
+## Localization
+
+TrayLight supports multiple languages out of the box. On startup it
+**auto-detects the Windows display language** (via
+`CultureInfo.CurrentUICulture`) and shows **all UI text** — tile titles, status
+messages, menu items and dialogs — in the matching language. No manual language
+switch is required.
+
+**Built-in languages:**
+
+| Language | Culture | Status |
+|----------|---------|--------|
+| English  | `en`    | Default / fallback |
+| German   | `de`    | Full |
+| French   | `fr`    | Full |
+
+Regional variants resolve to their base language (e.g. `de-AT` → German,
+`fr-CA` → French). Additional languages can be contributed by the community via
+Pull Request — just add a new `Strings.<culture>.resx` file (see
+*Contributing a translation* below).
+
+**Any language, no code change.** For a language without a built-in
+translation, admins can configure every visible string via **ADMX policy** —
+tile titles, shortcut labels, the header (branding) title, footer text and the
+info-text block. This means *any* language is supported without code changes,
+without a PR and without waiting for a new release.
+
+### Priority order
+
+For every piece of UI text, TrayLight resolves it in this order:
+
+1. **ADMX policy value** — if configured, it always wins.
+2. **Built-in translation** matching the Windows display language.
+3. **English** — the neutral fallback when neither of the above applies.
+
+### Example: Spanish without a Spanish translation
+
+A Spanish admin deploys TrayLight. No `Strings.es.resx` exists, so the built-in
+UI would fall back to English. Instead, the admin sets all tile titles, the
+header title, shortcut labels, footer and info text to Spanish via the **Intune
+Settings Catalog** (ADMX). Done — the app is fully Spanish. No code change, no
+PR, no waiting for a new release.
+
+### Contributing a translation
+
+Add a new `Strings.<culture>.resx` file under `src/TrayLight/Resources/` (copy
+`Strings.resx` and translate the values), then open a pull request. No code
+changes are needed — the new satellite assembly is picked up automatically.
 
 ## Author
 

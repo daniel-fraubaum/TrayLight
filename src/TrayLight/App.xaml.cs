@@ -41,6 +41,11 @@ public partial class App : Application
 
         base.OnStartup(e);
 
+        // Detect the Windows display language and align the process UI culture
+        // before any window is created, so all localized strings resolve to the
+        // matching language (German, French, or English fallback).
+        LocalizationService.Initialize();
+
         // Bootstrap pass: load the config file once so the LoggerFactory can
         // honour the user's Logging settings before DI is built.
         _bootstrapConfig = new ConfigurationService();
@@ -121,13 +126,36 @@ public partial class App : Application
 
         // First-launch welcome screen. The user-settings file lives in
         // %LOCALAPPDATA% so each Windows account gets its own "first run".
+        // The ADMX policy Behavior\ShowWelcomeScreen always wins: when an admin
+        // sets it to 0 (Disabled) the welcome screen is suppressed regardless of
+        // the per-user "don't show again" state. When the policy is Enabled (1)
+        // or Not Configured it falls back to the local user setting.
         var userSettings = Services.GetRequiredService<IUserSettingsService>();
-        if (!userSettings.Current.WelcomeShown)
+        if (ShouldShowWelcome(configService.Current.Behavior.ShowWelcomeScreen,
+                              userSettings.Current.WelcomeShown))
         {
             var welcome = Services.GetRequiredService<WelcomeWindow>();
             welcome.ShowDialog();
         }
     }
+
+    /// <summary>
+    /// Decides whether the first-launch welcome screen should be shown.
+    /// Priority: the ADMX policy <c>Behavior\ShowWelcomeScreen</c> set to
+    /// Disabled (false) suppresses the screen unconditionally; otherwise the
+    /// per-user "don't show again" preference (<paramref name="welcomeShown"/>)
+    /// decides.
+    /// </summary>
+    /// <param name="policyShowWelcome">
+    /// Effective value of the ShowWelcomeScreen policy. False only when the
+    /// policy is explicitly set to 0; true when Enabled or Not Configured.
+    /// </param>
+    /// <param name="welcomeShown">
+    /// The per-user setting: true once the user dismissed the welcome screen
+    /// with "don't show again".
+    /// </param>
+    internal static bool ShouldShowWelcome(bool policyShowWelcome, bool welcomeShown)
+        => policyShowWelcome && !welcomeShown;
 
     private static void ConfigureServices(IServiceCollection services)
     {
@@ -148,7 +176,7 @@ public partial class App : Application
         services.AddSingleton<IInfoItemProvider, StorageUsedProvider>();
         services.AddSingleton<IInfoItemProvider, NetworkInfoProvider>();
         services.AddSingleton<IInfoItemProvider, EntraIdStatusProvider>();
-        services.AddSingleton<IInfoItemProvider, IntuneComplianceProvider>();
+        services.AddSingleton<IInfoItemProvider, IntuneSyncProvider>();
 
         // App-level periodic refresh (timer rooted by this singleton).
         services.AddSingleton<AppRefreshService>();
@@ -158,6 +186,7 @@ public partial class App : Application
         services.AddSingleton<IShortcutActionHandler, AppActionHandler>();
         services.AddSingleton<IShortcutActionHandler, CommandActionHandler>();
         services.AddSingleton<IConfirmationService, MessageBoxConfirmationService>();
+        services.AddSingleton<IShortcutPlaceholderResolver, ShortcutPlaceholderResolver>();
         services.AddSingleton<TrayBalloonNotificationService>();
         services.AddSingleton<INotificationService>(sp => sp.GetRequiredService<TrayBalloonNotificationService>());
         services.AddSingleton<IActionExecutor, ActionExecutor>();

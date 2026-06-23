@@ -125,9 +125,26 @@ template is shipped with each release (and lives in
      individually configurable slots (*Shortcut slot 1* … *Shortcut slot 6*).
      Each slot exposes Title, Subtitle, ActionType
      (`url` / `app` / `command`), Action, Icon and
-     Position.
+     Position. The **Action** field supports dynamic `{{Placeholder}}`
+     tokens (e.g. `{{ComputerName}}`, `{{OsVersion}}`, `{{SerialNumber}}`,
+     `{{IntuneSync}}`) that are replaced with live device values when the
+     button is clicked — see [3d. Dynamic placeholders](#3d-dynamic-placeholders-in-shortcut-actions).
 
 3. Assign the profile to the same device groups as the MSI.
+
+> **Localized UI vs. ADMX text.** TrayLight auto-detects the Windows display
+> language and shows its built-in UI strings in English, German or French
+> accordingly. Any text you configure through ADMX (tile titles, footer text,
+> info text, shortcut titles, branding title, …) **always overrides** the
+> auto-detected language — the localized strings are only the defaults used when
+> no ADMX value is set.
+>
+> **ADMX overrides as a localization mechanism.** Because every visible string
+> can be overridden, ADMX doubles as a way to localize TrayLight into a language
+> that isn't built in. If your organization needs a language other than English,
+> German or French, simply set all visible strings (tile titles, header/branding
+> title, shortcut labels, footer and info text) to that language via the Intune
+> Settings Catalog — no code change, PR or new release required.
 
 ### 3b. Info text block
 
@@ -186,6 +203,36 @@ The `Branding\Logo` policy accepts a **URL** or a **local file path**.
 
 If `Branding\Logo` is empty or unset, TrayLight falls back to the built-in
 default icon shipped inside the executable.
+
+### 3d. Dynamic placeholders in shortcut actions
+
+A shortcut **Action** can embed `{{Placeholder}}` tokens that TrayLight
+replaces with **live device values at the moment the button is clicked**
+(not when the policy is read), so the substituted data is always current.
+
+| Placeholder        | Resolves to                                            |
+| ------------------ | ------------------------------------------------------ |
+| `{{ComputerName}}` | Device name                                            |
+| `{{OsVersion}}`    | OS edition + version (e.g. `Win 11 Ent 25H2`)          |
+| `{{LastReboot}}`   | Relative uptime (e.g. `4h 11m ago`)                    |
+| `{{Storage}}`      | Storage usage (e.g. `66% used`)                        |
+| `{{SerialNumber}}` | Hardware serial number                                 |
+| `{{IntuneSync}}`   | Last Intune sync (e.g. `13m ago` or `Not enrolled`)    |
+| `{{Network}}`      | Network type + IP (e.g. `Ethernet 192.168.199.52`)     |
+| `{{UserName}}`     | Current logged-in user                                 |
+| `{{DomainName}}`   | AD domain or workgroup name                            |
+
+- For `url` actions starting with `mailto:` or `https://`, values are
+  automatically URL-encoded so spaces and special characters don't break the
+  link. `app` / `command` actions receive the raw value.
+- Unresolved tokens (e.g. a disabled tile) become `N/A`.
+
+**Example** — a pre-filled IT support mail (set as the *Action* of a shortcut
+slot with ActionType `url`):
+
+```
+mailto:it@example.com?subject=Support - {{ComputerName}}&body=Device: {{ComputerName}}%0AOS: {{OsVersion}}%0ASerial: {{SerialNumber}}%0AIntune Sync: {{IntuneSync}}
+```
 
 ## 4. Verify on a target device
 

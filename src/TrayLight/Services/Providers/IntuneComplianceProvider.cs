@@ -10,9 +10,9 @@ namespace TrayLight.Services.Providers;
 ///   HKLM\SOFTWARE\Microsoft\IntuneManagementExtension      (last check-in)
 /// </summary>
 [SupportedOSPlatform("windows")]
-public sealed class IntuneComplianceProvider : InfoItemProviderBase
+public sealed class IntuneSyncProvider : InfoItemProviderBase
 {
-    public const string TypeKey = "intuneCompliance";
+    public const string TypeKey = "intuneSync";
 
     public override string Type => TypeKey;
     protected override string DefaultTitle => "Intune";
@@ -20,9 +20,9 @@ public sealed class IntuneComplianceProvider : InfoItemProviderBase
 
     private readonly Func<IntuneStatus> _statusReader;
 
-    public IntuneComplianceProvider() : this(ReadStatus) { }
+    public IntuneSyncProvider() : this(ReadStatus) { }
 
-    internal IntuneComplianceProvider(Func<IntuneStatus> statusReader)
+    internal IntuneSyncProvider(Func<IntuneStatus> statusReader)
     {
         _statusReader = statusReader;
     }

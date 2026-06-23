@@ -79,11 +79,35 @@
                      KeyPath="yes" />
     </Component>
 
+    <!-- Register the Windows Application event log source so the entries
+         written by EventLogLoggerProvider are visible via
+         Get-WinEvent -ProviderName 'TrayLight'. The source is created at
+         install time (elevated) and removed on uninstall, so the app never
+         needs admin rights at runtime to log. EventMessageFile points at the
+         .NET Framework generic message DLL (the same file that
+         EventLog.CreateEventSource registers by default) so event descriptions
+         render correctly. -->
+    <Component Id="EventLogSource" Directory="INSTALLFOLDER" Guid="E6F7A8B9-5555-6666-7777-888899990000">
+      <RegistryValue Root="HKLM"
+                     Key="Software\TrayLight\Install"
+                     Name="EventLogSource"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+      <util:EventSource Name="TrayLight"
+                        Log="Application"
+                        EventMessageFile="[WindowsFolder]Microsoft.NET\Framework64\v4.0.30319\EventLogMessages.dll"
+                        SupportsErrors="yes"
+                        SupportsWarnings="yes"
+                        SupportsInformationals="yes" />
+    </Component>
+
     <Feature Id="Main" Title="TrayLight" Level="1">
       <ComponentGroupRef Id="ProductFiles" />
       <ComponentRef Id="StartMenuShortcut" />
       <ComponentRef Id="AutoStartRegistry" />
       <ComponentRef Id="AssetsFolderMarker" />
+      <ComponentRef Id="EventLogSource" />
       <?if $(BundleLogo) = 1 ?>
       <ComponentRef Id="BundledLogo" />
       <?endif ?>
@@ -101,7 +125,10 @@
     <!-- "Launch TrayLight" on the Finish page. Uses WixShellExec so the app
          is started with the user's normal token rather than the elevated
          installer token. -->
-    <Property Id="WixShellExecTarget" Value="[INSTALLFOLDER]TrayLight.exe" />
+    <SetProperty Id="WixShellExecTarget"
+                 Value="[INSTALLFOLDER]TrayLight.exe"
+                 Before="ExecuteAction"
+                 Sequence="ui" />
     <CustomAction Id="LaunchApplication"
                   BinaryRef="Wix4UtilCA_X64"
                   DllEntry="WixShellExec"

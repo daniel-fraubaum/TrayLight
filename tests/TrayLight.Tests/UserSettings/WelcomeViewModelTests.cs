@@ -69,11 +69,23 @@ public class WelcomeViewModelTests
     [Fact]
     public void Constructor_seeds_three_feature_cards()
     {
-        var sut = new WelcomeViewModel(new StubConfig(), new FakeUserSettings(), new StubLogo());
-        Assert.Equal(3, sut.Features.Count);
-        Assert.Contains(sut.Features, f => f.Title.Contains("System"));
-        Assert.Contains(sut.Features, f => f.Title.Contains("Quick"));
-        Assert.Contains(sut.Features, f => f.Title.Contains("IT support"));
+        var originalUi = System.Globalization.CultureInfo.CurrentUICulture;
+        try
+        {
+            // Feature card titles are now localized; pin English so the assertions
+            // remain deterministic regardless of the host machine's display language.
+            System.Globalization.CultureInfo.CurrentUICulture =
+                System.Globalization.CultureInfo.GetCultureInfo("en-US");
+            var sut = new WelcomeViewModel(new StubConfig(), new FakeUserSettings(), new StubLogo());
+            Assert.Equal(3, sut.Features.Count);
+            Assert.Contains(sut.Features, f => f.Title.Contains("System"));
+            Assert.Contains(sut.Features, f => f.Title.Contains("Quick"));
+            Assert.Contains(sut.Features, f => f.Title.Contains("IT support"));
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = originalUi;
+        }
     }
 
     [Fact]

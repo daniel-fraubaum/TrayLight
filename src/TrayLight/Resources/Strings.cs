@@ -1,0 +1,98 @@
+using System.Globalization;
+using System.Resources;
+
+namespace TrayLight.Resources;
+
+/// <summary>
+/// Strongly-typed accessor for the localized UI strings stored in
+/// <c>Strings.resx</c> (English, neutral fallback), <c>Strings.de.resx</c>
+/// (German) and <c>Strings.fr.resx</c> (French).
+///
+/// <para>
+/// The <see cref="ResourceManager"/> resolves the active language from
+/// <see cref="CultureInfo.CurrentUICulture"/> at lookup time and falls back to
+/// the neutral (English) resource when no satellite assembly matches — so a
+/// culture such as <c>de-AT</c> automatically uses the <c>de</c> resources and
+/// any unknown culture lands on English. This is a hand-written accessor (not
+/// the VS designer file) so the strongly-typed members are available in plain
+/// <c>dotnet build</c> CLI scenarios without relying on the IDE code generator.
+/// </para>
+/// </summary>
+public static class Strings
+{
+    private static readonly ResourceManager Manager =
+        new(typeof(Strings).FullName!, typeof(Strings).Assembly);
+
+    /// <summary>
+    /// Looks up a resource by key for the current UI culture, falling back to
+    /// the key itself when the resource is missing (so a typo is visible rather
+    /// than throwing at runtime).
+    /// </summary>
+    public static string Get(string key) =>
+        Manager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+
+    /// <summary>
+    /// Looks up a composite-format resource by key and formats it with
+    /// <paramref name="args"/> using the invariant culture (the surrounding
+    /// numbers are already culture-neutral integers).
+    /// </summary>
+    public static string Format(string key, params object[] args) =>
+        string.Format(CultureInfo.CurrentCulture, Get(key), args);
+
+    // --- Window chrome / shared --------------------------------------------
+    public static string WelcomeTitle          => Get(nameof(WelcomeTitle));
+    public static string WelcomeSubtitle       => Get(nameof(WelcomeSubtitle));
+    public static string AboutTitle            => Get(nameof(AboutTitle));
+    public static string Close                 => Get(nameof(Close));
+    public static string DoNotShowAgain        => Get(nameof(DoNotShowAgain));
+    public static string GetStarted            => Get(nameof(GetStarted));
+    public static string Version               => Get(nameof(Version));
+    public static string CreatedBy             => Get(nameof(CreatedBy));
+    public static string SystemInformation     => Get(nameof(SystemInformation));
+    public static string CopySystemInfo        => Get(nameof(CopySystemInfo));
+    public static string Copied                => Get(nameof(Copied));
+    public static string CopyFailed            => Get(nameof(CopyFailed));
+    public static string CollectingSystemInfo  => Get(nameof(CollectingSystemInfo));
+    public static string QuickActions          => Get(nameof(QuickActions));
+    public static string PoweredBy             => Get(nameof(PoweredBy));
+
+    // --- Context menu ------------------------------------------------------
+    public static string MenuAbout             => Get(nameof(MenuAbout));
+    public static string MenuRefresh           => Get(nameof(MenuRefresh));
+    public static string MenuQuit              => Get(nameof(MenuQuit));
+
+    // --- Welcome feature cards --------------------------------------------
+    public static string FeatureSystemInfoTitle => Get(nameof(FeatureSystemInfoTitle));
+    public static string FeatureSystemInfoBody  => Get(nameof(FeatureSystemInfoBody));
+    public static string FeatureQuickAccessTitle => Get(nameof(FeatureQuickAccessTitle));
+    public static string FeatureQuickAccessBody  => Get(nameof(FeatureQuickAccessBody));
+    public static string FeatureItSupportTitle  => Get(nameof(FeatureItSupportTitle));
+    public static string FeatureItSupportBody   => Get(nameof(FeatureItSupportBody));
+
+    // --- Tile titles -------------------------------------------------------
+    public static string TileComputerName      => Get(nameof(TileComputerName));
+    public static string TileOsVersion         => Get(nameof(TileOsVersion));
+    public static string TileLastReboot        => Get(nameof(TileLastReboot));
+    public static string TileStorage           => Get(nameof(TileStorage));
+    public static string TileNetwork           => Get(nameof(TileNetwork));
+    public static string TileSerialNumber      => Get(nameof(TileSerialNumber));
+    public static string TileIntuneSync        => Get(nameof(TileIntuneSync));
+    public static string TileEntraId           => Get(nameof(TileEntraId));
+    public static string TileInfo              => Get(nameof(TileInfo));
+
+    // --- Status / value strings -------------------------------------------
+    public static string StatusNotEnrolled     => Get(nameof(StatusNotEnrolled));
+    public static string StatusUnknown         => Get(nameof(StatusUnknown));
+    public static string StatusDetecting       => Get(nameof(StatusDetecting));
+    public static string StatusUnavailable     => Get(nameof(StatusUnavailable));
+    public static string StatusSyncing         => Get(nameof(StatusSyncing));
+    public static string StatusOffline         => Get(nameof(StatusOffline));
+    public static string StatusVirtualMachineSerial => Get(nameof(StatusVirtualMachineSerial));
+    public static string NetworkEthernet       => Get(nameof(NetworkEthernet));
+    public static string RelativeUnknown       => Get(nameof(RelativeUnknown));
+    public static string RelativeJustNow       => Get(nameof(RelativeJustNow));
+
+    // --- Quick Actions defaults -------------------------------------------
+    public static string DefaultShortcutTitle    => Get(nameof(DefaultShortcutTitle));
+    public static string DefaultShortcutSubtitle => Get(nameof(DefaultShortcutSubtitle));
+}

@@ -67,8 +67,9 @@ public class EntraIdStatusProviderTests
     [Fact]
     public async Task Provider_does_not_warn_when_not_joined()
     {
-        var sut = new EntraIdStatusProvider(_ =>
-            Task.FromResult("AzureAdJoined : NO\nDomainJoined : NO\nWorkplaceJoined : NO"));
+        var sut = new EntraIdStatusProvider(
+            () => new EntraIdStatusProvider.ParsedStatus(
+                EntraIdStatusProvider.JoinState.NotJoined, "Not Joined", null));
         sut.Configure(new InfoItemConfig());
 
         var data = await sut.GetDataAsync();
@@ -80,7 +81,8 @@ public class EntraIdStatusProviderTests
     [Fact]
     public async Task Provider_swallows_runner_exception_and_returns_unavailable()
     {
-        var sut = new EntraIdStatusProvider(_ => throw new InvalidOperationException("dsregcmd missing"));
+        var sut = new EntraIdStatusProvider(
+            () => throw new InvalidOperationException("registry access denied"));
         sut.Configure(new InfoItemConfig());
 
         var data = await sut.GetDataAsync();

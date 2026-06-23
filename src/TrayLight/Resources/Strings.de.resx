@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="WelcomeTitle" xml:space="preserve">
+    <value>Willkommen bei TrayLight</value>
+  </data>
+  <data name="WelcomeSubtitle" xml:space="preserve">
+    <value>Ihr IT-Support-Begleiter in der Taskleiste.</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>Über TrayLight</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Schließen</value>
+  </data>
+  <data name="DoNotShowAgain" xml:space="preserve">
+    <value>Nicht mehr anzeigen</value>
+  </data>
+  <data name="GetStarted" xml:space="preserve">
+    <value>Los geht's</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="CreatedBy" xml:space="preserve">
+    <value>Erstellt von </value>
+  </data>
+  <data name="SystemInformation" xml:space="preserve">
+    <value>Systeminformationen</value>
+  </data>
+  <data name="CopySystemInfo" xml:space="preserve">
+    <value>Systeminfo kopieren</value>
+  </data>
+  <data name="Copied" xml:space="preserve">
+    <value>Kopiert!</value>
+  </data>
+  <data name="CopyFailed" xml:space="preserve">
+    <value>Kopieren fehlgeschlagen</value>
+  </data>
+  <data name="CollectingSystemInfo" xml:space="preserve">
+    <value>Systeminformationen werden gesammelt…</value>
+  </data>
+  <data name="QuickActions" xml:space="preserve">
+    <value>Schnellzugriff</value>
+  </data>
+  <data name="MenuAbout" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="MenuRefresh" xml:space="preserve">
+    <value>Aktualisieren</value>
+  </data>
+  <data name="MenuQuit" xml:space="preserve">
+    <value>Beenden</value>
+  </data>
+  <data name="LastRefreshedFormat" xml:space="preserve">
+    <value>Zuletzt aktualisiert: {0}</value>
+  </data>
+  <data name="PoweredBy" xml:space="preserve">
+    <value>Powered by </value>
+  </data>
+  <data name="FeatureSystemInfoTitle" xml:space="preserve">
+    <value>Systeminformationen</value>
+  </data>
+  <data name="FeatureSystemInfoBody" xml:space="preserve">
+    <value>Computername, Betriebssystem, Laufzeit, Speicher, Netzwerk und Intune-Status auf einen Blick.</value>
+  </data>
+  <data name="FeatureQuickAccessTitle" xml:space="preserve">
+    <value>Schnellzugriff</value>
+  </data>
+  <data name="FeatureQuickAccessBody" xml:space="preserve">
+    <value>Ein-Klick-Verknüpfungen zu Ihrem IT-Portal, der Wissensdatenbank und Ihren täglichen Apps.</value>
+  </data>
+  <data name="FeatureItSupportTitle" xml:space="preserve">
+    <value>IT-Support</value>
+  </data>
+  <data name="FeatureItSupportBody" xml:space="preserve">
+    <value>Rechtsklick auf das Taskleistensymbol → Info → Systeminfo kopieren, um Ihrem Ticket eine Diagnose anzuhängen.</value>
+  </data>
+  <data name="TileComputerName" xml:space="preserve">
+    <value>Computername</value>
+  </data>
+  <data name="TileOsVersion" xml:space="preserve">
+    <value>Betriebssystem</value>
+  </data>
+  <data name="TileLastReboot" xml:space="preserve">
+    <value>Letzter Neustart</value>
+  </data>
+  <data name="TileStorage" xml:space="preserve">
+    <value>Speicher</value>
+  </data>
+  <data name="TileNetwork" xml:space="preserve">
+    <value>Netzwerk</value>
+  </data>
+  <data name="TileSerialNumber" xml:space="preserve">
+    <value>Seriennummer</value>
+  </data>
+  <data name="TileIntuneSync" xml:space="preserve">
+    <value>Intune Sync</value>
+  </data>
+  <data name="TileInfo" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="StatusNotEnrolled" xml:space="preserve">
+    <value>Nicht registriert</value>
+  </data>
+  <data name="StatusUnknown" xml:space="preserve">
+    <value>Unbekannt</value>
+  </data>
+  <data name="StatusDetecting" xml:space="preserve">
+    <value>Wird erkannt…</value>
+  </data>
+  <data name="StatusUnavailable" xml:space="preserve">
+    <value>Nicht verfügbar</value>
+  </data>
+  <data name="StatusSyncing" xml:space="preserve">
+    <value>Wird synchronisiert…</value>
+  </data>
+  <data name="StatusOffline" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="StatusVirtualMachineSerial" xml:space="preserve">
+    <value>N/V (Virtuelle Maschine)</value>
+  </data>
+  <data name="NetworkEthernet" xml:space="preserve">
+    <value>Ethernet</value>
+  </data>
+  <data name="StoragePercentUsedFormat" xml:space="preserve">
+    <value>{0}% belegt</value>
+  </data>
+  <data name="GreetingFormat" xml:space="preserve">
+    <value>Willkommen, {0}</value>
+  </data>
+  <data name="DefaultShortcutTitle" xml:space="preserve">
+    <value>IT Support</value>
+  </data>
+  <data name="DefaultShortcutSubtitle" xml:space="preserve">
+    <value>headsinthecloud.blog öffnen</value>
+  </data>
+  <data name="RelativeUnknown" xml:space="preserve">
+    <value>unbekannt</value>
+  </data>
+  <data name="RelativeJustNow" xml:space="preserve">
+    <value>gerade eben</value>
+  </data>
+  <data name="RelativeMinuteAgoFormat" xml:space="preserve">
+    <value>vor {0} Minute</value>
+  </data>
+  <data name="RelativeMinutesAgoFormat" xml:space="preserve">
+    <value>vor {0} Minuten</value>
+  </data>
+  <data name="RelativeHoursMinutesAgoFormat" xml:space="preserve">
+    <value>vor {0} Std. {1} Min.</value>
+  </data>
+  <data name="RelativeDayAgoFormat" xml:space="preserve">
+    <value>vor {0} Tag</value>
+  </data>
+  <data name="RelativeDaysAgoFormat" xml:space="preserve">
+    <value>vor {0} Tagen</value>
+  </data>
+  <data name="UptimeDaysHoursAgoFormat" xml:space="preserve">
+    <value>vor {0} Tagen {1} Std.</value>
+  </data>
+  <data name="UptimeOneDayHoursAgoFormat" xml:space="preserve">
+    <value>vor 1 Tag {0} Std.</value>
+  </data>
+  <data name="UptimeHoursMinutesAgoFormat" xml:space="preserve">
+    <value>vor {0} Std. {1} Min.</value>
+  </data>
+  <data name="UptimeMinutesAgoFormat" xml:space="preserve">
+    <value>vor {0} Min.</value>
+  </data>
+</root>

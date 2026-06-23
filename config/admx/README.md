@@ -40,7 +40,7 @@ UI; raw OMA-URI values still work and are documented here for reference.
 | `Logging`                       | `EnableFileLog`             | REG_DWORD | `0`/`1`.                                                             |
 | `Logging`                       | `LogRetentionDays`          | REG_DWORD | Days kept.                                                           |
 | `Logging`                       | `MinimumLevel`              | REG_SZ    | `Trace`, `Debug`, `Information`, `Warning`, `Error`, `Critical`.     |
-| `InfoItems\<TypeName>`          | (subkey existence)          | -        | Presence of the per-tile subkey means the tile is enabled (the GP policy state controls this). Type names: `ComputerName`, `OsVersion`, `LastReboot`, `StorageUsed`, `NetworkInfo`, `EntraIdStatus`, `SerialNumber`, `IntuneSync`. |
+| `InfoItems\<TypeName>`          | (subkey existence)          | -        | Presence of the per-tile subkey means the tile is enabled (the GP policy state controls this). Type names: `ComputerName`, `OsVersion`, `LastReboot`, `StorageUsed`, `NetworkInfo`, `SerialNumber`, `IntuneSync`. |
 | `InfoItems\<TypeName>`          | `Position`                  | REG_DWORD | `-1` (hidden) or `0..7`.                                             |
 | `InfoItems\<TypeName>`          | `Title`                     | REG_SZ    | Custom label override.                                               |
 | `InfoItems\<TypeName>`          | `Icon`                      | REG_SZ    | Segoe Fluent Icons code, e.g. `E977`.                                |
@@ -51,7 +51,7 @@ UI; raw OMA-URI values still work and are documented here for reference.
 | `Shortcuts\<n>`                 | `Subtitle`                  | REG_SZ    |                                                                      |
 | `Shortcuts\<n>`                 | `Icon`                      | REG_SZ    | Segoe Fluent Icons code, e.g. `E8F2`.                                |
 | `Shortcuts\<n>`                 | `ActionType`                | REG_SZ    | `url`, `app`, or `command`.                                          |
-| `Shortcuts\<n>`                 | `Action`                    | REG_SZ    | URL / executable / command line.                                     |
+| `Shortcuts\<n>`                 | `Action`                    | REG_SZ    | URL / executable / command line. Supports `{{Placeholder}}` tokens (see below). |
 | `Shortcuts\<n>`                 | `Position`                  | REG_DWORD | Sort order, `-1` hides.                                              |
 | `Shortcuts\<n>`                 | `RequiresConfirmation`      | REG_DWORD | `0`/`1`.                                                             |
 | `Shortcuts\<n>`                 | `ConfirmationMessage`       | REG_SZ    |                                                                      |
@@ -60,3 +60,34 @@ UI; raw OMA-URI values still work and are documented here for reference.
 `<n>` is the slot number. The ADMX exposes slots `1` through `6`; the
 registry reader accepts any numeric subkey, so additional slots can be
 pushed via raw Settings Catalog OMA-URI rules if needed.
+
+### Dynamic placeholders in `Action`
+
+A shortcut `Action` may embed `{{Placeholder}}` tokens that are replaced with
+live device values **at the moment the button is clicked** (not when the policy
+is read), so the data is always current.
+
+| Placeholder        | Resolves to                                            |
+| ------------------ | ------------------------------------------------------ |
+| `{{ComputerName}}` | Device name                                            |
+| `{{OsVersion}}`    | OS edition + version (e.g. `Win 11 Ent 25H2`)          |
+| `{{LastReboot}}`   | Relative uptime (e.g. `4h 11m ago`)                    |
+| `{{Storage}}`      | Storage usage (e.g. `66% used`)                        |
+| `{{SerialNumber}}` | Hardware serial number                                 |
+| `{{IntuneSync}}`   | Last Intune sync (e.g. `13m ago` or `Not enrolled`)    |
+| `{{Network}}`      | Network type + IP (e.g. `Ethernet 192.168.199.52`)     |
+| `{{UserName}}`     | Current logged-in user                                 |
+| `{{DomainName}}`   | AD domain or workgroup name                            |
+
+- For `url` actions that start with `mailto:` or `https://`, substituted values
+  are automatically URL-encoded (`Uri.EscapeDataString`) so spaces and special
+  characters don't break the link.
+- For `app` and `command` actions the raw value is inserted without encoding.
+- A token that can't be resolved (e.g. a disabled tile) becomes `N/A`.
+
+**Example** (pre-filled support mail):
+
+```
+mailto:it@example.com?subject=Support - {{ComputerName}}&body=Device: {{ComputerName}}%0AOS: {{OsVersion}}%0ASerial: {{SerialNumber}}%0AIntune Sync: {{IntuneSync}}
+```
+

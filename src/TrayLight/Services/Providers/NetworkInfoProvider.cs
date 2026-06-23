@@ -1,12 +1,16 @@
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Text;
 
 namespace TrayLight.Services.Providers;
 
 /// <summary>
 /// Active network connection: SSID for Wi-Fi, "Ethernet" otherwise, plus the
 /// local IPv4. Icon switches between Wi-Fi and Ethernet glyphs.
+/// Uses <see cref="NetworkInterface"/> for adapter enumeration and the native
+/// <c>wlanapi.dll</c> for Wi-Fi SSID — no external processes.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class NetworkInfoProvider : InfoItemProviderBase
@@ -80,50 +84,84 @@ public sealed class NetworkInfoProvider : InfoItemProviderBase
 
         if (nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
         {
-            // Best-effort SSID via netsh; falls back to the adapter name.
-            var ssid = TryGetWifiSsid() ?? nic.Name;
+            // Try to get the SSID via the native WlanAPI. Falls back to the
+            // adapter name when the Wi-Fi subsystem is unavailable.
+            var ssid = TryGetWifiSsidNative(nic.Id) ?? nic.Name;
             return new NetworkSnapshot(NetworkKind.WiFi, ssid, ipv4);
         }
 
         return new NetworkSnapshot(NetworkKind.Ethernet, "Ethernet", ipv4);
     }
 
-    private static string? TryGetWifiSsid()
+    /// <summary>
+    /// Reads the current SSID for the given NIC adapter GUID via the native
+    /// <c>wlanapi.dll</c> WlanQueryInterface call. Returns <c>null</c> when the
+    /// interface is not connected or the API is unavailable.
+    /// </summary>
+    private static string? TryGetWifiSsidNative(string nicId)
     {
         try
         {
-            var psi = new System.Diagnostics.ProcessStartInfo("netsh.exe", "wlan show interfaces")
-            {
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                CreateNoWindow = true
-            };
-            using var p = System.Diagnostics.Process.Start(psi);
-            if (p is null) return null;
-            var output = p.StandardOutput.ReadToEnd();
-            if (!p.WaitForExit(2000)) { try { p.Kill(); } catch { } return null; }
+            if (!Guid.TryParse(nicId, out var guid)) return null;
 
-            foreach (var line in output.Split('\n'))
+            if (WlanOpenHandle(2, IntPtr.Zero, out _, out var client) != 0) return null;
+            try
             {
-                var trimmed = line.Trim();
-                // Match "SSID  : Foo" but not "BSSID : ...". Look for the
-                // first colon and check the key.
-                var colon = trimmed.IndexOf(':');
-                if (colon <= 0) continue;
-                var key = trimmed[..colon].Trim();
-                if (string.Equals(key, "SSID", StringComparison.OrdinalIgnoreCase))
+                const uint OpcodeCurrentConnection = 7; // wlan_intf_opcode_current_connection
+                if (WlanQueryInterface(client, ref guid, OpcodeCurrentConnection,
+                        IntPtr.Zero, out _, out var dataPtr, out _) != 0)
+                    return null;
+                try
                 {
-                    var value = trimmed[(colon + 1)..].Trim();
-                    return string.IsNullOrEmpty(value) ? null : value;
+                    // WLAN_CONNECTION_ATTRIBUTES layout (byte offsets):
+                    //   isState            : [0]   4 bytes
+                    //   wlanConnectionMode : [4]   4 bytes
+                    //   strProfileName     : [8]   512 bytes  (256 WCHARs)
+                    //   dot11Ssid.uSSIDLength: [520] 4 bytes
+                    //   dot11Ssid.ucSSID   : [524] 32 bytes
+                    const int SsidLengthOffset = 520;
+                    const int SsidBytesOffset  = 524;
+                    const int MaxSsidLength    = 32;
+
+                    var length = Marshal.ReadInt32(dataPtr, SsidLengthOffset);
+                    if (length <= 0 || length > MaxSsidLength) return null;
+
+                    var ssidBytes = new byte[length];
+                    Marshal.Copy(dataPtr + SsidBytesOffset, ssidBytes, 0, length);
+                    return Encoding.UTF8.GetString(ssidBytes);
                 }
+                finally
+                {
+                    WlanFreeMemory(dataPtr);
+                }
+            }
+            finally
+            {
+                WlanCloseHandle(client, IntPtr.Zero);
             }
         }
         catch
         {
-            // netsh missing or access denied -> fall back to adapter name.
+            return null;
         }
-        return null;
     }
+
+    #region WlanAPI P/Invoke
+    [DllImport("wlanapi.dll", SetLastError = false)]
+    private static extern uint WlanOpenHandle(uint dwClientVersion, IntPtr pReserved,
+        out uint pdwNegotiatedVersion, out IntPtr phClientHandle);
+
+    [DllImport("wlanapi.dll", SetLastError = false)]
+    private static extern uint WlanCloseHandle(IntPtr hClientHandle, IntPtr pReserved);
+
+    [DllImport("wlanapi.dll", SetLastError = false)]
+    private static extern void WlanFreeMemory(IntPtr pMemory);
+
+    [DllImport("wlanapi.dll", SetLastError = false)]
+    private static extern uint WlanQueryInterface(IntPtr hClientHandle, ref Guid pInterfaceGuid,
+        uint dwOpCode, IntPtr pReserved, out uint pdwDataSize, out IntPtr ppData,
+        out uint pWlanOpcodeValueType);
+    #endregion
 
     public enum NetworkKind { Offline, Ethernet, WiFi }
 

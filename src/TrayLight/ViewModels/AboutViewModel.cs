@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using TrayLight.Resources;
 using TrayLight.Services;
 
 namespace TrayLight.ViewModels;
@@ -22,7 +23,7 @@ public partial class AboutViewModel : ObservableObject
     [ObservableProperty] private string _logoSource  = string.Empty;
     [ObservableProperty] private Brush  _accentBrush = Brushes.DodgerBlue;
     [ObservableProperty] private string _systemInfoDump = string.Empty;
-    [ObservableProperty] private string _copyButtonText = "Copy system info";
+    [ObservableProperty] private string _copyButtonText = Strings.CopySystemInfo;
 
     public string BlogLinkText => BlogText;
     public string BlogLinkUrl  => BlogUrl;
@@ -45,8 +46,8 @@ public partial class AboutViewModel : ObservableObject
         AccentBrush  = ParseAccent(branding.AccentColor);
 
         // Build the dump lazily on the UI thread when the view first binds —
-        // it spawns dsregcmd.exe so doing it on the ctor would block startup.
-        SystemInfoDump = "Collecting system information…";
+        // it reads registry + WMI so doing it on the ctor would block startup.
+        SystemInfoDump = Strings.CollectingSystemInfo;
         _ = LoadDumpAsync();
     }
 
@@ -69,11 +70,11 @@ public partial class AboutViewModel : ObservableObject
         try
         {
             Clipboard.SetText(SystemInfoDump);
-            CopyButtonText = "Copied!";
+            CopyButtonText = Strings.Copied;
         }
         catch
         {
-            CopyButtonText = "Copy failed";
+            CopyButtonText = Strings.CopyFailed;
         }
     }
 

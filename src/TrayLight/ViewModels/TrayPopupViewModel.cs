@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Logging;
 using TrayLight.Models;
+using TrayLight.Resources;
 using TrayLight.Services;
 using TrayLight.Services.Actions;
 using TrayLight.Services.Logging;
@@ -61,7 +62,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
 
     public bool HasInfoText => InfoTextLines.Count > 0;
 
-    public string PoweredBy        => PoweredByPrefix;
+    public string PoweredBy        => Strings.PoweredBy;
     public string PoweredByLink    => PoweredByLinkText;
     public string PoweredByLinkUrl => PoweredByUrl;
 
@@ -70,7 +71,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         get
         {
             if (LastSyncUtc is null) return string.Empty;
-            return $"Last refreshed: {FormatRelative(DateTime.UtcNow - LastSyncUtc.Value)}";
+            return Strings.Format("LastRefreshedFormat", FormatRelative(DateTime.UtcNow - LastSyncUtc.Value));
         }
     }
 
@@ -82,19 +83,19 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
     /// </summary>
     internal static string FormatRelative(TimeSpan elapsed)
     {
-        if (elapsed < TimeSpan.Zero || elapsed.TotalDays > 3650) return "unknown";
-        if (elapsed.TotalMinutes < 1) return "just now";
+        if (elapsed < TimeSpan.Zero || elapsed.TotalDays > 3650) return Strings.RelativeUnknown;
+        if (elapsed.TotalMinutes < 1) return Strings.RelativeJustNow;
         if (elapsed.TotalMinutes < 60)
         {
             var m = (int)elapsed.TotalMinutes;
-            return $"{m} minute{(m == 1 ? "" : "s")} ago";
+            return Strings.Format(m == 1 ? "RelativeMinuteAgoFormat" : "RelativeMinutesAgoFormat", m);
         }
         if (elapsed.TotalHours < 24)
         {
-            return $"{elapsed.Hours}h {elapsed.Minutes}m ago";
+            return Strings.Format("RelativeHoursMinutesAgoFormat", elapsed.Hours, elapsed.Minutes);
         }
         var d = (int)elapsed.TotalDays;
-        return $"{d} day{(d == 1 ? "" : "s")} ago";
+        return Strings.Format(d == 1 ? "RelativeDayAgoFormat" : "RelativeDaysAgoFormat", d);
     }
 
     public TrayPopupViewModel(
@@ -111,7 +112,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         _logoService     = logoService;
         _appRefresh      = appRefresh;
         _logger          = logger;
-        Greeting = $"Welcome, {_systemInfo.UserName}";
+        Greeting = Strings.Format("GreetingFormat", _systemInfo.UserName);
 
         ApplyConfig(_configService.Current);
         LogoSource = _logoService.ResolvedLogoPath;
@@ -275,7 +276,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
 
             case InfoItemType.StorageUsed:
                 var (sizeText, percent) = GetSystemDriveUsage();
-                vm.Value = $"{percent}% used";
+                vm.Value = Strings.Format("StoragePercentUsedFormat", percent);
                 vm.ValueTooltip = sizeText;
                 vm.HasWarning = cfg.StorageLimit is int sl && percent >= sl;
                 vm.WarningSeverity = percent >= 95 ? "danger" : "warning";
@@ -289,7 +290,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
                 break;
 
             case InfoItemType.EntraIdStatus:
-                vm.Value = "Detecting…";
+                vm.Value = Strings.StatusDetecting;
                 vm.ValueTooltip = string.Empty;
                 _ = LoadEntraIdAsync(vm);
                 break;
@@ -316,11 +317,11 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
 
     private static string FormatUptime(TimeSpan uptime)
     {
-        if (uptime.TotalDays >= 2)  return $"{(int)uptime.TotalDays} days {uptime.Hours}h ago";
-        if (uptime.TotalDays >= 1)  return $"1 day {uptime.Hours}h ago";
-        if (uptime.TotalHours >= 1) return $"{uptime.Hours}h {uptime.Minutes}m ago";
-        if (uptime.TotalMinutes >= 1) return $"{(int)uptime.TotalMinutes}m ago";
-        return "just now";
+        if (uptime.TotalDays >= 2)  return Strings.Format("UptimeDaysHoursAgoFormat", (int)uptime.TotalDays, uptime.Hours);
+        if (uptime.TotalDays >= 1)  return Strings.Format("UptimeOneDayHoursAgoFormat", uptime.Hours);
+        if (uptime.TotalHours >= 1) return Strings.Format("UptimeHoursMinutesAgoFormat", uptime.Hours, uptime.Minutes);
+        if (uptime.TotalMinutes >= 1) return Strings.Format("UptimeMinutesAgoFormat", (int)uptime.TotalMinutes);
+        return Strings.RelativeJustNow;
     }
 
     private static void CopyToClipboard(string text)
@@ -353,9 +354,9 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
             model.Contains("KVM",      StringComparison.OrdinalIgnoreCase) ||
             model.Contains("Xen",      StringComparison.OrdinalIgnoreCase))
         {
-            return "N/A (Virtual Machine)";
+            return Strings.StatusVirtualMachineSerial;
         }
-        return "Unavailable";
+        return Strings.StatusUnavailable;
     }
 
     private static bool IsValidSerial(string? s)
@@ -401,7 +402,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
 
         if (!enrolled && lastSync is null)
         {
-            vm.Value = "Not enrolled";
+            vm.Value = Strings.StatusNotEnrolled;
             vm.ValueTooltip = "Device is not Intune managed.";
             vm.HasWarning = false;
             // No sync to trigger - make the tile non-interactive.
@@ -414,7 +415,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         {
             // Enrolled but no readable timestamp (no PushLaunch task yet,
             // no IME logs, etc.). Don't lie with "just now".
-            vm.Value = "Unknown";
+            vm.Value = Strings.StatusUnknown;
             vm.ValueTooltip = "Device is Intune managed but the last sync time "
                 + "could not be determined.\nClick to sync now.";
             vm.HasWarning = false;
@@ -833,7 +834,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
     private static void TriggerIntuneSync(InfoItemViewModel vm, ILogger? logger)
     {
         var original = vm.Value;
-        vm.Value = "Syncing\u2026";
+        vm.Value = Strings.StatusSyncing;
         try
         {
             // Officially documented MDM company-portal URI; succeeds when an
@@ -915,7 +916,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
                 .OrderByDescending(n => n.Speed)
                 .FirstOrDefault();
 
-            if (nic is null) return ("Offline", "No active network connection.", false);
+            if (nic is null) return (Strings.StatusOffline, "No active network connection.", false);
 
             var ipv4 = nic.GetIPProperties().UnicastAddresses
                 .FirstOrDefault(a => a.Address.AddressFamily ==
@@ -925,7 +926,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
             var name = nic.NetworkInterfaceType ==
                        System.Net.NetworkInformation.NetworkInterfaceType.Wireless80211
                 ? nic.Name
-                : "Ethernet";
+                : Strings.NetworkEthernet;
 
             // Two-line layout so neither name nor IPv4 gets truncated on a
             // narrow tile.
@@ -934,7 +935,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         }
         catch
         {
-            return ("Unavailable", string.Empty, false);
+            return (Strings.StatusUnavailable, string.Empty, false);
         }
     }
 
@@ -942,23 +943,11 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
     {
         try
         {
-            var output = await Task.Run(() =>
-            {
-                var psi = new System.Diagnostics.ProcessStartInfo("dsregcmd.exe", "/status")
-                {
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8
-                };
-                using var p = System.Diagnostics.Process.Start(psi);
-                if (p is null) return string.Empty;
-                var s = p.StandardOutput.ReadToEnd();
-                p.WaitForExit(2000);
-                return s;
-            }).ConfigureAwait(true);
+            // Read join state from the registry directly — no dsregcmd process.
+            var status = await Task.Run(
+                TrayLight.Services.Providers.EntraIdStatusProvider.ReadFromRegistry)
+                .ConfigureAwait(true);
 
-            var status = TrayLight.Services.Providers.EntraIdStatusProvider.Parse(output);
             vm.Value = status.StateDisplay;
             vm.ValueTooltip = string.IsNullOrEmpty(status.TenantName)
                 ? status.StateDisplay
@@ -967,7 +956,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         }
         catch
         {
-            vm.Value = "Unavailable";
+            vm.Value = Strings.StatusUnavailable;
         }
     }
 
@@ -988,8 +977,8 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         {
             ordered.Add(new ShortcutConfig
             {
-                Title      = "IT Support",
-                Subtitle   = "Open headsinthecloud.blog",
+                Title      = Strings.DefaultShortcutTitle,
+                Subtitle   = Strings.DefaultShortcutSubtitle,
                 ActionType = ShortcutActionType.Url,
                 Action     = "https://headsinthecloud.blog",
                 Icon       = "Segoe Fluent Icons:E897",
@@ -1043,7 +1032,6 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         InfoItemType.StorageUsed      => "\uEDA2", // Drive
         InfoItemType.NetworkInfo      => "\uE968", // Network
         InfoItemType.EntraIdStatus    => "\uE77B", // Contact
-        InfoItemType.IntuneCompliance => "\uE73E", // Checkmark
         InfoItemType.SerialNumber     => "\uE7BF", // Tag
         InfoItemType.IntuneSync       => "\uE895", // Sync
         _                             => "\uE946", // Info
@@ -1051,16 +1039,15 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
 
     private static string DefaultTitleFor(InfoItemType type) => type switch
     {
-        InfoItemType.ComputerName     => "Computer Name",
-        InfoItemType.OsVersion        => "OS Version",
-        InfoItemType.LastReboot       => "Last Reboot",
-        InfoItemType.StorageUsed      => "Storage",
-        InfoItemType.NetworkInfo      => "Network",
-        InfoItemType.EntraIdStatus    => "Entra ID",
-        InfoItemType.IntuneCompliance => "Intune",
-        InfoItemType.SerialNumber     => "Serial Number",
-        InfoItemType.IntuneSync       => "Intune Sync",
-        _                             => "Info",
+        InfoItemType.ComputerName     => Strings.TileComputerName,
+        InfoItemType.OsVersion        => Strings.TileOsVersion,
+        InfoItemType.LastReboot       => Strings.TileLastReboot,
+        InfoItemType.StorageUsed      => Strings.TileStorage,
+        InfoItemType.NetworkInfo      => Strings.TileNetwork,
+        InfoItemType.EntraIdStatus    => Strings.TileEntraId,
+        InfoItemType.SerialNumber     => Strings.TileSerialNumber,
+        InfoItemType.IntuneSync       => Strings.TileIntuneSync,
+        _                             => Strings.TileInfo,
     };
 
     private static Brush ParseAccent(string hex)

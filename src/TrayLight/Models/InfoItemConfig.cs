@@ -12,7 +12,6 @@ public enum InfoItemType
     StorageUsed,
     NetworkInfo,
     EntraIdStatus,
-    IntuneCompliance,
     SerialNumber,
     IntuneSync
 }

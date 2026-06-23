@@ -1,6 +1,6 @@
 # TrayLight
 
-A modern Windows System Tray (notification area) application built with WPF and .NET 8.
+A modern Windows System Tray (notification area) application built with WPF and .NET 10.
 
 ## Features
 
@@ -22,7 +22,7 @@ A modern Windows System Tray (notification area) application built with WPF and 
 TrayLight/
 ├── TrayLight.sln
 ├── src/
-│   ├── TrayLight/                     # Main WPF application (.NET 8)
+│   ├── TrayLight/                     # Main WPF application (.NET 10)
 │   │   ├── App.xaml(.cs)
 │   │   ├── Models/
 │   │   ├── ViewModels/
@@ -42,7 +42,7 @@ TrayLight/
 
 ## Build & Run
 
-Requires the .NET 8 SDK (with the *Windows Desktop* workload).
+Requires the .NET 10 SDK (with the *Windows Desktop* workload).
 
 ```pwsh
 dotnet restore TrayLight.sln

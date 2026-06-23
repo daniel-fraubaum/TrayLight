@@ -18,18 +18,21 @@ public sealed class ActionExecutor : IActionExecutor
     private readonly IConfirmationService _confirmation;
     private readonly INotificationService _notifications;
     private readonly ILogger<ActionExecutor> _logger;
+    private readonly IShortcutPlaceholderResolver? _placeholders;
 
     public ActionExecutor(
         IEnumerable<IShortcutActionHandler> handlers,
         IConfirmationService confirmation,
         INotificationService notifications,
-        ILogger<ActionExecutor>? logger = null)
+        ILogger<ActionExecutor>? logger = null,
+        IShortcutPlaceholderResolver? placeholders = null)
     {
         // Last-registered handler wins (allows overrides in tests / DI).
         _handlers = handlers.ToDictionary(h => h.ActionType, h => h);
         _confirmation = confirmation;
         _notifications = notifications;
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<ActionExecutor>.Instance;
+        _placeholders = placeholders;
     }
 
     /// <summary>
@@ -46,6 +49,26 @@ public sealed class ActionExecutor : IActionExecutor
             var msg = $"Unsupported action type '{config.ActionType}'.";
             _notifications.Notify(config.Title, msg, NotificationSeverity.Error);
             return ActionResult.Fail(msg);
+        }
+
+        // Expand {{Placeholder}} tokens against live tile values at click-time,
+        // so the action always carries current data. Resolution never throws;
+        // an unresolvable token becomes "N/A".
+        if (_placeholders is not null && ShortcutPlaceholders.ContainsTokens(config.Action))
+        {
+            try
+            {
+                var expanded = await _placeholders
+                    .ExpandAsync(config.Action, cancellationToken)
+                    .ConfigureAwait(false);
+                if (!string.Equals(expanded, config.Action, StringComparison.Ordinal))
+                    config = WithAction(config, expanded);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(LogEvents.ActionFailed, ex,
+                    "Placeholder expansion failed for '{Title}'; using the raw action.", config.Title);
+            }
         }
 
         if (config.RequiresConfirmation)
@@ -106,4 +129,18 @@ public sealed class ActionExecutor : IActionExecutor
 
     private const int InvokeEventId = 3000;
     private const int FailureEventId = 3001;
+
+    /// <summary>Shallow copy of <paramref name="c"/> with a replaced action string.</summary>
+    private static ShortcutConfig WithAction(ShortcutConfig c, string action) => new()
+    {
+        Title                = c.Title,
+        Subtitle             = c.Subtitle,
+        Icon                 = c.Icon,
+        ActionType           = c.ActionType,
+        Action               = action,
+        Position             = c.Position,
+        RequiresConfirmation = c.RequiresConfirmation,
+        ConfirmationMessage  = c.ConfirmationMessage,
+        SuccessMessage       = c.SuccessMessage,
+    };
 }

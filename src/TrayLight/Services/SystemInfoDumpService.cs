@@ -51,8 +51,7 @@ public sealed class SystemInfoDumpService : ISystemInfoDumpService
         sb.AppendLine("[Entra ID / Workplace]");
         try
         {
-            var dsregcmd = RunDsregcmd();
-            var parsed = EntraIdStatusProvider.Parse(dsregcmd);
+            var parsed = EntraIdStatusProvider.ReadFromRegistry();
             sb.AppendLine($"Join state:       {parsed.StateDisplay}");
             sb.AppendLine($"Tenant:           {parsed.TenantName ?? "(unknown)"}");
         }
@@ -66,7 +65,7 @@ public sealed class SystemInfoDumpService : ISystemInfoDumpService
         sb.AppendLine("[Intune]");
         try
         {
-            var intune = IntuneComplianceProvider.ReadStatus();
+            var intune = IntuneSyncProvider.ReadStatus();
             sb.AppendLine($"Enrolled:         {(intune.IsEnrolled ? "Yes" : "No")}");
             sb.AppendLine(intune.LastSyncUtc is { } sync
                 ? $"Last sync (UTC):  {sync:yyyy-MM-dd HH:mm:ss}"
@@ -114,22 +113,6 @@ public sealed class SystemInfoDumpService : ISystemInfoDumpService
         {
             return ("Windows", string.Empty, Environment.OSVersion.Version.ToString());
         }
-    }
-
-    private static string RunDsregcmd()
-    {
-        var psi = new System.Diagnostics.ProcessStartInfo("dsregcmd.exe", "/status")
-        {
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            CreateNoWindow = true,
-            StandardOutputEncoding = Encoding.UTF8
-        };
-        using var p = System.Diagnostics.Process.Start(psi)
-                      ?? throw new InvalidOperationException("dsregcmd.exe could not be started.");
-        var output = p.StandardOutput.ReadToEnd();
-        if (!p.WaitForExit(3000)) { try { p.Kill(); } catch { } throw new TimeoutException("dsregcmd.exe timed out."); }
-        return output;
     }
 
     private static void AppendNetwork(StringBuilder sb)

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.26100.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
@@ -10,6 +10,7 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>TrayLight</RootNamespace>
     <AssemblyName>TrayLight</AssemblyName>
+    <NeutralResourcesLanguage>en</NeutralResourcesLanguage>
     <Product>TrayLight</Product>
     <Authors>headsinthecloud.blog</Authors>
     <Company>headsinthecloud.blog</Company>
@@ -38,20 +39,27 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
-    <PackageReference Include="H.NotifyIcon.Wpf" Version="2.2.0" />
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
-    <PackageReference Include="System.Diagnostics.EventLog" Version="8.0.1" />
-    <PackageReference Include="System.Management" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.1.5" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+    <PackageReference Include="H.NotifyIcon.Wpf" Version="2.4.1" />
+    <PackageReference Include="System.Management" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\app-normal.ico"     Condition="Exists('Assets\app-normal.ico')" />
-    <Resource Include="Assets\app-warning.ico"    Condition="Exists('Assets\app-warning.ico')" />
-    <Resource Include="Assets\default-logo.png"   Condition="Exists('Assets\default-logo.png')" />
+    <Resource Include="Assets\app-normal.ico" Condition="Exists('Assets\app-normal.ico')" />
+    <Resource Include="Assets\app-warning.ico" Condition="Exists('Assets\app-warning.ico')" />
+    <Resource Include="Assets\default-logo.png" Condition="Exists('Assets\default-logo.png')" />
+  </ItemGroup>
+
+  <!-- Force the neutral resource set to embed under the exact manifest name the
+       hand-written Strings accessor looks up. Without this the SDK only emits the
+       de/fr satellite assemblies and drops the neutral English fallback. -->
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Strings.resx">
+      <ManifestResourceName>TrayLight.Resources.Strings</ManifestResourceName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

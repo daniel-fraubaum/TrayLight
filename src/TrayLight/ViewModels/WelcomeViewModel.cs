@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using TrayLight.Resources;
 using TrayLight.Services;
 using TrayLight.Services.UserSettings;
 
@@ -16,8 +17,8 @@ public partial class WelcomeViewModel : ObservableObject
 
     private readonly IUserSettingsService _userSettings;
 
-    [ObservableProperty] private string _title       = "Welcome to TrayLight";
-    [ObservableProperty] private string _subtitle    = "Your IT support companion lives in the system tray.";
+    [ObservableProperty] private string _title       = Strings.WelcomeTitle;
+    [ObservableProperty] private string _subtitle    = Strings.WelcomeSubtitle;
     [ObservableProperty] private string _logoSource  = string.Empty;
     [ObservableProperty] private string _companyName = string.Empty;
     [ObservableProperty] private Brush  _accentBrush = Brushes.DodgerBlue;
@@ -25,7 +26,7 @@ public partial class WelcomeViewModel : ObservableObject
 
     public ObservableCollection<FeatureCardViewModel> Features { get; } = new();
 
-    public string PoweredBy        => PoweredByPrefix;
+    public string PoweredBy        => Strings.PoweredBy;
     public string PoweredByLink    => PoweredByLinkText;
     public string PoweredByLinkUrl => PoweredByUrl;
 
@@ -44,20 +45,20 @@ public partial class WelcomeViewModel : ObservableObject
         Features.Add(new FeatureCardViewModel
         {
             IconGlyph = "\uE7F4", // Info / Devices
-            Title     = "System information",
-            Body      = "See computer name, OS version, uptime, storage, network, and Entra/Intune status at a glance."
+            Title     = Strings.FeatureSystemInfoTitle,
+            Body      = Strings.FeatureSystemInfoBody
         });
         Features.Add(new FeatureCardViewModel
         {
             IconGlyph = "\uE71B", // Link
-            Title     = "Quick access",
-            Body      = "One-click shortcuts to your IT portal, knowledge base, and the apps you use every day."
+            Title     = Strings.FeatureQuickAccessTitle,
+            Body      = Strings.FeatureQuickAccessBody
         });
         Features.Add(new FeatureCardViewModel
         {
             IconGlyph = "\uE939", // Help
-            Title     = "IT support",
-            Body      = "Right-click the tray icon → About → Copy system info to attach a diagnostic dump to your ticket."
+            Title     = Strings.FeatureItSupportTitle,
+            Body      = Strings.FeatureItSupportBody
         });
     }
 
