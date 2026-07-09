@@ -22,4 +22,13 @@
     <ProjectReference Include="..\..\src\TrayLight\TrayLight.csproj" />
   </ItemGroup>
 
+  <!-- Copy the shipped JSON language files into the test output's Languages
+       folder so the LocalizationService singleton resolves them the same way it
+       does next to the installed exe. -->
+  <ItemGroup>
+    <Content Include="..\..\src\TrayLight\Languages\*.json"
+             Link="Languages\%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

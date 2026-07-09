@@ -34,7 +34,7 @@ public sealed class SystemInfoDumpService : ISystemInfoDumpService
         // ----- Identity / OS -------------------------------------------------
         sb.AppendLine("[Device]");
         sb.AppendLine($"Computer name:    {_system.MachineName}");
-        sb.AppendLine($"Hostname (DNS):   {SafeDnsHostName()}");
+        AppendIfPresent(sb, "Hostname (DNS):", TryDnsHostName());
         sb.AppendLine($"User:             {_system.UserName}");
         sb.AppendLine($"Domain:           {Environment.UserDomainName}");
         sb.AppendLine();
@@ -42,7 +42,7 @@ public sealed class SystemInfoDumpService : ISystemInfoDumpService
         sb.AppendLine("[Operating system]");
         var (osName, osDisplay, osBuild) = ReadOsInfo();
         sb.AppendLine($"Product:          {osName}");
-        sb.AppendLine($"Version:          {osDisplay}");
+        AppendIfPresent(sb, "Version:", osDisplay);
         sb.AppendLine($"Build:            {osBuild}");
         sb.AppendLine($"Architecture:     {RuntimeInformation.OSArchitecture}");
         sb.AppendLine();
@@ -53,11 +53,17 @@ public sealed class SystemInfoDumpService : ISystemInfoDumpService
         {
             var parsed = EntraIdStatusProvider.ReadFromRegistry();
             sb.AppendLine($"Join state:       {parsed.StateDisplay}");
-            sb.AppendLine($"Tenant:           {parsed.TenantName ?? "(unknown)"}");
+
+            var (tenantId, tenantName, userEmail) = ReadEntraTenant();
+            tenantName ??= parsed.TenantName;
+            // Omit tenant lines entirely when nothing reliable is available.
+            AppendIfPresent(sb, "Tenant:", tenantName);
+            AppendIfPresent(sb, "Tenant ID:", tenantId);
+            AppendIfPresent(sb, "User (Entra):", userEmail);
         }
-        catch (Exception ex)
+        catch
         {
-            sb.AppendLine($"Join state:       (unavailable: {ex.Message})");
+            // Registry unreadable - omit the section body (rule: no "unknown").
         }
         sb.AppendLine();
 
@@ -65,15 +71,19 @@ public sealed class SystemInfoDumpService : ISystemInfoDumpService
         sb.AppendLine("[Intune]");
         try
         {
+            // Same data source as the Intune tile: OMA-DM ServerLastSuccessTime.
             var intune = IntuneSyncProvider.ReadStatus();
             sb.AppendLine($"Enrolled:         {(intune.IsEnrolled ? "Yes" : "No")}");
-            sb.AppendLine(intune.LastSyncUtc is { } sync
-                ? $"Last sync (UTC):  {sync:yyyy-MM-dd HH:mm:ss}"
-                : "Last sync (UTC):  unknown");
+            if (intune.LastSyncUtc is { } sync)
+            {
+                sb.AppendLine($"Last sync (UTC):   {sync:yyyy-MM-dd HH:mm:ss} UTC");
+                sb.AppendLine($"Last sync (local): {sync.ToLocalTime():yyyy-MM-dd HH:mm:ss zzz}");
+            }
+            // else: omit the last-sync lines entirely.
         }
-        catch (Exception ex)
+        catch
         {
-            sb.AppendLine($"Status:           (unavailable: {ex.Message})");
+            // Registry unreadable - omit the section body (rule: no "unknown").
         }
         sb.AppendLine();
 
@@ -84,11 +94,46 @@ public sealed class SystemInfoDumpService : ISystemInfoDumpService
         return sb.ToString();
     }
 
-    private static string SafeDnsHostName()
+    private static string? TryDnsHostName()
     {
-        try { return Dns.GetHostName(); } catch { return "(unavailable)"; }
+        try { return Dns.GetHostName(); } catch { return null; }
     }
 
+    /// <summary>
+    /// Appends "<paramref name="label"/> <paramref name="value"/>" only when the
+    /// value is present. Missing values are omitted entirely rather than printed
+    /// as "unknown" / "(none)" — a helpdesk dump should contain only reliable data.
+    /// </summary>
+    private static void AppendIfPresent(StringBuilder sb, string label, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return;
+        sb.AppendLine($"{label,-17} {value}");
+    }
+
+    /// <summary>
+    /// Reads Entra ID tenant details from
+    /// <c>HKLM\SYSTEM\CurrentControlSet\Control\CloudDomainJoin\JoinInfo\{GUID}</c>.
+    /// Returns nulls when the device is not Entra-joined or the key is unreadable.
+    /// </summary>
+    private static (string? TenantId, string? TenantName, string? UserEmail) ReadEntraTenant()
+    {
+        try
+        {
+            using var joinInfo = Registry.LocalMachine.OpenSubKey(
+                @"SYSTEM\CurrentControlSet\Control\CloudDomainJoin\JoinInfo");
+            var deviceKeys = joinInfo?.GetSubKeyNames();
+            if (deviceKeys is { Length: > 0 })
+            {
+                using var deviceKey = joinInfo!.OpenSubKey(deviceKeys[0]);
+                var tenantId   = deviceKey?.GetValue("TenantId")   as string;
+                var tenantName = deviceKey?.GetValue("TenantName") as string;
+                var userEmail  = deviceKey?.GetValue("UserEmail")  as string;
+                return (tenantId, tenantName, userEmail);
+            }
+        }
+        catch { /* not Entra-joined or ACL-restricted */ }
+        return (null, null, null);
+    }
     private static (string Product, string Display, string Build) ReadOsInfo()
     {
         try
@@ -115,33 +160,60 @@ public sealed class SystemInfoDumpService : ISystemInfoDumpService
         }
     }
 
+    /// <summary>
+    /// Name/description substrings that identify Windows filter-driver bindings
+    /// and pseudo adapters that clutter the dump. Matching adapters are skipped.
+    /// </summary>
+    private static readonly string[] AdapterExclusions =
+    {
+        "Filter", "QoS Packet Scheduler", "LightWeight", "LWF", "Npcap", "Loopback",
+    };
+
     private static void AppendNetwork(StringBuilder sb)
     {
         NetworkInterface[] nics;
         try { nics = NetworkInterface.GetAllNetworkInterfaces(); }
-        catch (Exception ex) { sb.AppendLine($"  (unavailable: {ex.Message})"); return; }
+        catch { return; }
 
+        // Dedupe by MAC: a physical NIC surfaces once per filter-driver binding,
+        // but only the real entry carries IP addresses. Requiring IPs before
+        // claiming the MAC guarantees we keep the useful entry.
+        var seenMacs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var any = false;
-        foreach (var nic in nics
-                 .Where(n => n.OperationalStatus == OperationalStatus.Up)
-                 .Where(n => n.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
-                             n.NetworkInterfaceType != NetworkInterfaceType.Tunnel))
+
+        foreach (var nic in nics.Where(n => n.OperationalStatus == OperationalStatus.Up))
         {
-            any = true;
+            // Skip filter-driver bindings / pseudo adapters by name or description.
+            if (AdapterExclusions.Any(m =>
+                    nic.Name.Contains(m, StringComparison.OrdinalIgnoreCase) ||
+                    nic.Description.Contains(m, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            // Require a real MAC address.
+            var macBytes = nic.GetPhysicalAddress().GetAddressBytes();
+            if (macBytes.Length == 0)
+                continue;
+            var mac = string.Join(":", macBytes.Select(b => b.ToString("X2")));
+
+            // Require at least one IP address.
             var ips = nic.GetIPProperties().UnicastAddresses
                 .Where(a => a.Address.AddressFamily is AddressFamily.InterNetwork or AddressFamily.InterNetworkV6)
                 .Select(a => a.Address.ToString())
                 .ToArray();
-            var mac = nic.GetPhysicalAddress();
-            var macFormatted = mac.GetAddressBytes().Length > 0
-                ? string.Join(":", mac.GetAddressBytes().Select(b => b.ToString("X2")))
-                : "(none)";
+            if (ips.Length == 0)
+                continue;
+
+            // Skip duplicate bindings of the same physical NIC.
+            if (!seenMacs.Add(mac))
+                continue;
 
             sb.AppendLine($"- {nic.Name}");
             sb.AppendLine($"    Type:    {nic.NetworkInterfaceType}");
-            sb.AppendLine($"    MAC:     {macFormatted}");
-            sb.AppendLine($"    IP(s):   {(ips.Length == 0 ? "(none)" : string.Join(", ", ips))}");
+            sb.AppendLine($"    MAC:     {mac}");
+            sb.AppendLine($"    IP(s):   {string.Join(", ", ips)}");
+            any = true;
         }
+
         if (!any) sb.AppendLine("  (no active network adapters)");
     }
 }

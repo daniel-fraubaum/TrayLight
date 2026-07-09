@@ -242,7 +242,11 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
             Type     = cfg.Type,
             Position = cfg.Position,
             IconGlyph = ParseGlyph(cfg.Icon) ?? DefaultGlyphFor(cfg.Type),
-            Title     = cfg.Title ?? DefaultTitleFor(cfg.Type)
+            // An empty or whitespace Title means "not configured": fall back to
+            // the built-in default, which is localized to the display language.
+            Title     = string.IsNullOrWhiteSpace(cfg.Title)
+                ? DefaultTitleFor(cfg.Type)
+                : cfg.Title
         };
 
         switch (cfg.Type)
@@ -284,7 +288,10 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
 
             case InfoItemType.NetworkInfo:
                 var net = GetNetworkSummary();
-                vm.Value = net.Display;
+                vm.Value = net.Name;
+                // IPv4 goes on its own auto-shrinking second line so a full
+                // 15-char address (255.255.255.255) is never truncated.
+                vm.ValueSecondLine = net.IPv4;
                 vm.ValueTooltip = net.Tooltip;
                 // Network state is informational - offline is shown but never warns.
                 break;
@@ -438,8 +445,18 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Returns true when the device has at least one MDM enrollment whose
-    /// ProviderID identifies it as an Intune-managed enrollment.
+    /// Reads the current Intune enrollment + last-sync summary for reuse by the
+    /// tray hover tooltip. Mirrors the Intune tile logic; the returned time is
+    /// in local time (or <c>null</c> when unknown / not enrolled).
+    /// </summary>
+    public static (bool Enrolled, DateTime? LastSyncLocal) GetIntuneSummary(ILogger? logger = null)
+    {
+        var enrollments = CollectIntuneEnrollments(logger);
+        var enrolled = enrollments.Count > 0;
+        var (lastSync, _) = ReadIntuneLastSync(enrollments, logger);
+        return (enrolled, lastSync);
+    }
+
     /// </summary>
     private static bool IsIntuneEnrolled() => CollectIntuneEnrollments(null).Count > 0;
 
@@ -833,28 +850,109 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
 
     private static void TriggerIntuneSync(InfoItemViewModel vm, ILogger? logger)
     {
-        var original = vm.Value;
         vm.Value = Strings.StatusSyncing;
+        // Snapshot the current timestamp so the poll loop can detect the moment
+        // the real MDM check-in updates ServerLastSuccessTime.
+        var baseline = SafeReadIntuneLastSync(logger);
+        _ = RunIntuneSyncAsync(vm, logger, baseline);
+    }
+
+    /// <summary>
+    /// Fires a real OMA-DM/MDM check-in (the same action as the Windows
+    /// Settings "Sync" button) via <c>Windows.Management.MdmSessionManager</c>,
+    /// plus the Intune Management Extension sync as a secondary action, then
+    /// polls <c>ServerLastSuccessTime</c> until it advances (or a 2-minute
+    /// timeout elapses) and refreshes the tile.
+    /// </summary>
+    private static async Task RunIntuneSyncAsync(
+        InfoItemViewModel vm, ILogger? logger, DateTime? baseline)
+    {
+        var triggered = false;
+
+        // ---- PRIMARY: real MDM/OMA-DM check-in via WinRT --------------------
+        // This is what actually advances ServerLastSuccessTime (the value the
+        // tile displays). intunemanagementextension://syncapp only triggers the
+        // IME (Win32 apps/scripts) and leaves that timestamp untouched.
         try
         {
-            // Officially documented MDM company-portal URI; succeeds when an
-            // MDM enrollment exists and the IME service is installed.
+            var session = Windows.Management.MdmSessionManager.TryCreateSession();
+            if (session is not null)
+            {
+                await session.StartAsync().AsTask().ConfigureAwait(false);
+                triggered = true;
+                logger?.LogInformation(LogEvents.InfoItemUpdated,
+                    "IntuneSync: MdmSessionManager session started (real OMA-DM check-in).");
+            }
+            else
+            {
+                logger?.LogInformation(LogEvents.InfoItemUpdated,
+                    "IntuneSync: MdmSessionManager.TryCreateSession returned null (no MDM enrollment?).");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger?.LogWarning(ex,
+                "IntuneSync: MdmSessionManager sync failed; falling back to IME sync only.");
+        }
+
+        // ---- SECONDARY: Intune Management Extension sync --------------------
+        // Still useful - kicks the IME to re-evaluate Win32 apps/scripts.
+        try
+        {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
                 "intunemanagementextension://syncapp")
             { UseShellExecute = true });
+            triggered = true;
         }
-        catch
+        catch (Exception ex)
         {
-            vm.Value = original;
-            vm.ValueTooltip = "Intune sync not available \u2013 device is not enrolled.";
+            logger?.LogWarning(ex, "IntuneSync: IME syncapp launch failed.");
+        }
+
+        if (!triggered)
+        {
+            // Neither trigger worked - restore the tile to its real state.
+            UiInvoke(() => LoadIntuneSync(vm, logger));
             return;
         }
 
-        // Refresh the displayed last-sync timestamp after a short grace period.
-        _ = Task.Delay(TimeSpan.FromSeconds(5)).ContinueWith(_ =>
+        // ---- Poll for the timestamp to advance ------------------------------
+        // Show "Syncing…" for a few seconds, then re-read ServerLastSuccessTime
+        // every 10 seconds for up to 2 minutes; refresh the tile as soon as the
+        // timestamp changes (or on timeout so it never sticks on "Syncing…").
+        var deadline = DateTime.UtcNow + TimeSpan.FromMinutes(2);
+        await Task.Delay(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
+        while (DateTime.UtcNow < deadline)
         {
-            System.Windows.Application.Current?.Dispatcher.Invoke(() => LoadIntuneSync(vm, logger));
-        });
+            var latest = SafeReadIntuneLastSync(logger);
+            if (latest is { } t && (baseline is null || t > baseline))
+            {
+                logger?.LogInformation(LogEvents.InfoItemUpdated,
+                    "IntuneSync: ServerLastSuccessTime advanced to {Time:o}; refreshing tile.", t);
+                UiInvoke(() => LoadIntuneSync(vm, logger));
+                return;
+            }
+            await Task.Delay(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+        }
+
+        logger?.LogInformation(LogEvents.InfoItemUpdated,
+            "IntuneSync: timestamp did not change within 2 minutes; refreshing tile with current value.");
+        UiInvoke(() => LoadIntuneSync(vm, logger));
+    }
+
+    /// <summary>Reads the current Intune last-sync time, swallowing any error.</summary>
+    private static DateTime? SafeReadIntuneLastSync(ILogger? logger)
+    {
+        try { return ReadIntuneLastSync(CollectIntuneEnrollments(logger), logger).Time; }
+        catch { return null; }
+    }
+
+    /// <summary>Runs <paramref name="action"/> on the WPF UI thread.</summary>
+    private static void UiInvoke(Action action)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess()) action();
+        else dispatcher.Invoke(action);
     }
 
     private static (string Display, string Detail) GetOsVersionDisplay(string fallback)
@@ -903,39 +1001,32 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
     private static string StripMicrosoft(string s) =>
         s.StartsWith("Microsoft ", StringComparison.OrdinalIgnoreCase) ? s["Microsoft ".Length..] : s;
 
-    private static (string Display, string Tooltip, bool Online) GetNetworkSummary()
+    private static (string Name, string IPv4, string Tooltip, bool Online) GetNetworkSummary()
     {
         try
         {
-            var nic = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
-                .Where(n => n.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up)
-                .Where(n => n.NetworkInterfaceType !=
-                            System.Net.NetworkInformation.NetworkInterfaceType.Loopback &&
-                            n.NetworkInterfaceType !=
-                            System.Net.NetworkInformation.NetworkInterfaceType.Tunnel)
-                .OrderByDescending(n => n.Speed)
-                .FirstOrDefault();
+            // Excludes virtual adapters (Hyper-V, VMware, …) and APIPA
+            // addresses, preferring the physical adapter that owns the default
+            // gateway - see NetworkAdapterSelector.
+            var selection = TrayLight.Services.Providers.NetworkAdapterSelector.SelectBest(
+                TrayLight.Services.Providers.NetworkAdapterSelector.EnumerateLiveAdapters());
 
-            if (nic is null) return (Strings.StatusOffline, "No active network connection.", false);
+            if (selection is null)
+                return (Strings.StatusOffline, string.Empty, "No active network connection.", false);
 
-            var ipv4 = nic.GetIPProperties().UnicastAddresses
-                .FirstOrDefault(a => a.Address.AddressFamily ==
-                                     System.Net.Sockets.AddressFamily.InterNetwork)
-                ?.Address.ToString() ?? "(no IPv4)";
-
-            var name = nic.NetworkInterfaceType ==
+            var ipv4 = selection.IPv4;
+            var name = selection.Adapter.Type ==
                        System.Net.NetworkInformation.NetworkInterfaceType.Wireless80211
-                ? nic.Name
+                ? selection.Adapter.Name
                 : Strings.NetworkEthernet;
 
-            // Two-line layout so neither name nor IPv4 gets truncated on a
-            // narrow tile.
-            var display = $"{name}\n{ipv4}";
-            return (display, $"{nic.Description}\nIPv4: {ipv4}", true);
+            // The tooltip keeps the full IPv4 as a fallback in case the tile
+            // ever clips the value on very narrow layouts.
+            return (name, ipv4, $"{selection.Adapter.Description}\nIPv4: {ipv4}", true);
         }
         catch
         {
-            return (Strings.StatusUnavailable, string.Empty, false);
+            return (Strings.StatusUnavailable, string.Empty, string.Empty, false);
         }
     }
 

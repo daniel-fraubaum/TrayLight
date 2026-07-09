@@ -11,6 +11,7 @@ public partial class InfoItemViewModel : ObservableObject
     [ObservableProperty] private string _title = string.Empty;
     [ObservableProperty] private string _value = string.Empty;
     [ObservableProperty] private string _valueTooltip = string.Empty;
+    [ObservableProperty] private string _valueSecondLine = string.Empty;
     [ObservableProperty] private string _iconGlyph = "\uE946";   // info circle
     [ObservableProperty] private bool   _hasWarning;
     [ObservableProperty] private string _warningSeverity = "warning"; // "warning" | "danger"

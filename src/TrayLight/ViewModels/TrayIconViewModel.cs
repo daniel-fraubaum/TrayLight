@@ -103,10 +103,74 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
             // Never let a tray-icon swap crash the app — keep the previous icon.
         }
 
-        ToolTipText = state.HasWarnings
-            ? $"TrayLight — {state.Count} warning{(state.Count == 1 ? "" : "s")}"
-            : "TrayLight";
+        // Rebuild the rich hover tooltip (computer name, IP, Intune, warnings)
+        // off the UI thread so the registry / network reads never block it.
+        _ = RefreshTooltipAsync(state);
     }
+
+    /// <summary>
+    /// Builds the multi-line tray tooltip on a background thread and assigns it
+    /// on the UI thread. Any failure falls back to the plain product name.
+    /// </summary>
+    private async Task RefreshTooltipAsync(BadgeState state)
+    {
+        string tooltip;
+        try
+        {
+            tooltip = await Task.Run(() => BuildTooltip(state)).ConfigureAwait(true);
+        }
+        catch
+        {
+            tooltip = "TrayLight";
+        }
+        ToolTipText = tooltip;
+    }
+
+    /// <summary>
+    /// Composes the compact tray hover summary:
+    ///   line 1: computer name
+    ///   line 2: IPv4 of the physical adapter (see NetworkAdapterSelector)
+    ///   line 3: last Intune sync ("Intune: 3m ago" / "Intune: Not enrolled")
+    ///   line 4: warning count (only when warnings are active)
+    /// All text is localized via the language resources.
+    /// </summary>
+    private static string BuildTooltip(BadgeState state)
+    {
+        var lines = new List<string>
+        {
+            // Line 1 — computer name.
+            Environment.MachineName,
+        };
+
+        // Line 2 — IPv4 of the selected physical adapter (empty => offline).
+        var selection = Services.Providers.NetworkAdapterSelector.SelectBest(
+            Services.Providers.NetworkAdapterSelector.EnumerateLiveAdapters());
+        lines.Add(string.IsNullOrEmpty(selection?.IPv4)
+            ? Resources.Strings.StatusOffline
+            : selection!.IPv4);
+
+        // Line 3 — last Intune sync (mirrors the Intune tile).
+        var (enrolled, lastSync) = TrayPopupViewModel.GetIntuneSummary();
+        string intuneValue;
+        if (!enrolled && lastSync is null)
+            intuneValue = Resources.Strings.StatusNotEnrolled;
+        else if (lastSync is { } t)
+            intuneValue = TrayPopupViewModel.FormatRelative(DateTime.Now - t);
+        else
+            intuneValue = Resources.Strings.StatusUnknown;
+        lines.Add(Resources.Strings.Format("TrayTooltipIntuneFormat", intuneValue));
+
+        // Line 4 — warnings (only when active).
+        if (state.HasWarnings && state.Count > 0)
+        {
+            lines.Add(Resources.Strings.Format(
+                state.Count == 1 ? "TrayTooltipWarningSingularFormat" : "TrayTooltipWarningsFormat",
+                state.Count));
+        }
+
+        return string.Join("\n", lines);
+    }
+
 
     private void OnConfigChanged(object? sender, PropertyChangedEventArgs e)
     {

@@ -6,8 +6,10 @@ namespace TrayLight.Services.Providers;
 
 /// <summary>
 /// Reports Microsoft Intune (MDM) enrollment + last sync time. Reads:
-///   HKLM\SOFTWARE\Microsoft\Enrollments\{enrollmentId}     (provider name)
-///   HKLM\SOFTWARE\Microsoft\IntuneManagementExtension      (last check-in)
+///   HKLM\SOFTWARE\Microsoft\Enrollments\{enrollmentId}     (ProviderID)
+///   HKLM\SOFTWARE\Microsoft\Provisioning\OMADM\Accounts\{id}\Protected\
+///     ConnInfo\ServerLastSuccessTime                       (last sync, primary)
+///   HKLM\SOFTWARE\Microsoft\IntuneManagementExtension      (last sync, fallback)
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class IntuneSyncProvider : InfoItemProviderBase
@@ -68,12 +70,15 @@ public sealed class IntuneSyncProvider : InfoItemProviderBase
     internal static IntuneStatus ReadStatus()
     {
         // HKLM\SOFTWARE\Microsoft\Enrollments and \IntuneManagementExtension
-        // are ACL-restricted to SYSTEM/Administrators on most builds. TrayLight
-        // runs as the interactive user, so accessing them throws
-        // SecurityException ("Requested registry access is not allowed.").
-        // We swallow those access errors and treat the device as not enrolled
-        // rather than surfacing the raw exception text in the tile.
+        // are ACL-restricted to SYSTEM/Administrators on most builds, so the
+        // last check-in time cannot be read from there as the interactive user.
+        // The authoritative, user-readable source is the OMA-DM
+        // ServerLastSuccessTime value (same as Windows Settings > Access work
+        // or school > Info and the Intune tile). We enumerate the MDM
+        // enrollments, confirm enrollment via ProviderID, and read that value.
         var enrolled = false;
+        DateTime? lastSyncUtc = null;
+
         try
         {
             using var enrollments = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Enrollments");
@@ -85,11 +90,15 @@ public sealed class IntuneSyncProvider : InfoItemProviderBase
                     {
                         using var k = enrollments.OpenSubKey(sub);
                         var provider = k?.GetValue("ProviderID") as string;
-                        if (string.Equals(provider, "MS DM Server", StringComparison.OrdinalIgnoreCase))
-                        {
-                            enrolled = true;
-                            break;
-                        }
+                        if (!string.Equals(provider, "MS DM Server", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        enrolled = true;
+
+                        // PRIMARY sync source: OMA-DM ServerLastSuccessTime.
+                        var utc = ReadOmaDmServerLastSuccessUtc(sub);
+                        if (utc is { } t && (lastSyncUtc is null || t > lastSyncUtc))
+                            lastSyncUtc = t;
                     }
                     catch (System.Security.SecurityException) { /* per-enrollment ACL */ }
                     catch (UnauthorizedAccessException) { /* per-enrollment ACL */ }
@@ -99,13 +108,53 @@ public sealed class IntuneSyncProvider : InfoItemProviderBase
         catch (System.Security.SecurityException) { /* HKLM\...\Enrollments locked down */ }
         catch (UnauthorizedAccessException) { /* HKLM\...\Enrollments locked down */ }
 
-        DateTime? lastSync = null;
+        // Fallback: the IME check-in value, which is usually ACL-restricted and
+        // therefore normally returns null.
+        lastSyncUtc ??= ReadImeCheckinUtc();
+
+        return new IntuneStatus(enrolled, lastSyncUtc);
+    }
+
+    /// <summary>
+    /// Reads the OMA-DM <c>ServerLastSuccessTime</c> for a specific enrollment
+    /// and returns it as UTC, or <c>null</c> when missing/unreadable. Despite
+    /// the trailing <c>Z</c> the value is stored in local wall time on current
+    /// Windows builds (verified against MDM event-log entries), so it is pinned
+    /// to Local and then converted to UTC.
+    /// </summary>
+    private static DateTime? ReadOmaDmServerLastSuccessUtc(string enrollmentGuid)
+    {
+        try
+        {
+            using var conn = Registry.LocalMachine.OpenSubKey(
+                $@"SOFTWARE\Microsoft\Provisioning\OMADM\Accounts\{enrollmentGuid}\Protected\ConnInfo");
+            var raw = conn?.GetValue("ServerLastSuccessTime") as string;
+            if (string.IsNullOrEmpty(raw))
+                return null;
+
+            var bare = raw!.EndsWith('Z') ? raw[..^1] : raw;
+            if (DateTime.TryParseExact(bare, "yyyyMMddTHHmmss",
+                    CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+            {
+                return DateTime.SpecifyKind(parsed, DateTimeKind.Local).ToUniversalTime();
+            }
+        }
+        catch (System.Security.SecurityException) { /* Protected key ACL */ }
+        catch (UnauthorizedAccessException) { /* Protected key ACL */ }
+        return null;
+    }
+
+    /// <summary>
+    /// Reads the IntuneManagementExtension last check-in time as UTC. This key
+    /// is ACL-restricted on most builds, so this normally returns <c>null</c>
+    /// and only serves as a best-effort fallback.
+    /// </summary>
+    private static DateTime? ReadImeCheckinUtc()
+    {
         try
         {
             using var ime = Registry.LocalMachine.OpenSubKey(
                 @"SOFTWARE\Microsoft\IntuneManagementExtension");
-            // The IME logs its last check-in under a few alternate value names
-            // depending on the agent build. Try the most common ones.
             var raw = ime?.GetValue("LastCheckinTimeUTC")
                    ?? ime?.GetValue("LastCheckinTime")
                    ?? ime?.GetValue("LastSyncTime");
@@ -114,13 +163,12 @@ public sealed class IntuneSyncProvider : InfoItemProviderBase
                     DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
                     out var parsed))
             {
-                lastSync = parsed;
+                return parsed;
             }
         }
         catch (System.Security.SecurityException) { /* IME key locked down */ }
         catch (UnauthorizedAccessException) { /* IME key locked down */ }
-
-        return new IntuneStatus(enrolled, lastSync);
+        return null;
     }
 
     public sealed record IntuneStatus(bool IsEnrolled, DateTime? LastSyncUtc);

@@ -75,6 +75,11 @@ public partial class App : Application
         _appLogger = Services.GetRequiredService<ILogger<App>>();
         _bootstrapConfig.AttachLogger(Services.GetRequiredService<ILogger<ConfigurationService>>());
 
+        // Give the file-based localization service a logger now that the logging
+        // pipeline is up, so missing/corrupt language file warnings are recorded.
+        TrayLight.Services.LocalizationService.SharedLogger =
+            loggerFactory.CreateLogger(nameof(TrayLight.Services.LocalizationService));
+
         // Inject loggers into providers resolved from the container so their
         // refresh / warning events flow through the structured pipeline.
         foreach (var provider in Services.GetServices<IInfoItemProvider>())

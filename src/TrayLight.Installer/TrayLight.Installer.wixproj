@@ -5,7 +5,7 @@
     <OutputType>Package</OutputType>
     <Platform>x64</Platform>
     <!-- ProductVersion can be overridden by CI: dotnet build -p:ProductVersion=1.2.3 -->
-    <ProductVersion Condition="'$(ProductVersion)' == ''">1.1.0</ProductVersion>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">2.1.0</ProductVersion>
     <TrayLightProject>$(MSBuildThisFileDirectory)..\TrayLight\TrayLight.csproj</TrayLightProject>
     <TrayLightPublishDir>$(MSBuildThisFileDirectory)obj\$(Configuration)\publish</TrayLightPublishDir>
     <BundledLogoSource>$(MSBuildThisFileDirectory)..\TrayLight\Assets\logo.png</BundledLogoSource>

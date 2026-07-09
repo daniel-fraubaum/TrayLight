@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using TrayLight.Resources;
 using TrayLight.Services;
 using TrayLight.ViewModels;
@@ -7,10 +9,12 @@ using Xunit;
 namespace TrayLight.Tests.Localization;
 
 /// <summary>
-/// Validates the multi-language resource pipeline: the satellite assemblies for
-/// German and French resolve correctly, unsupported cultures fall back to the
-/// neutral English resource, and the regional formatters in the view-model honour
-/// the active UI culture.
+/// Validates the runtime, file-based JSON localization pipeline: German and
+/// French JSON files resolve correctly, regional cultures fall back to their base
+/// language, unsupported cultures fall back to English, the fallback chain
+/// (exact culture &gt; language &gt; English) is honoured, corrupt or missing
+/// files degrade gracefully, and the view-model formatters honour the active UI
+/// culture.
 /// </summary>
 public class LocalizationTests
 {
@@ -134,5 +138,115 @@ public class LocalizationTests
 
         WithUiCulture("en-US", () =>
             Assert.Equal("75% used", Strings.Format("StoragePercentUsedFormat", 75)));
+    }
+
+    // ---- File-based fallback chain ----------------------------------------
+
+    private static string CreateTempLanguages(Dictionary<string, string> files)
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "TrayLightLang_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        foreach (var (tag, content) in files)
+            File.WriteAllText(Path.Combine(dir, tag + ".json"), content);
+        return dir;
+    }
+
+    [Fact]
+    public void Fallback_chain_prefers_exact_culture_then_language_then_english()
+    {
+        var dir = CreateTempLanguages(new Dictionary<string, string>
+        {
+            ["en"]    = "{ \"Greeting\": \"Hello\", \"EnglishOnly\": \"OnlyInEnglish\" }",
+            ["de"]    = "{ \"Greeting\": \"Hallo\" }",
+            ["de-AT"] = "{ \"Greeting\": \"Servus\" }",
+        });
+        try
+        {
+            var svc = new LocalizationService(dir);
+
+            // Exact culture file wins.
+            Assert.Equal("Servus", svc.GetString("Greeting", CultureInfo.GetCultureInfo("de-AT")));
+            // Language file used when no exact culture file exists.
+            Assert.Equal("Hallo", svc.GetString("Greeting", CultureInfo.GetCultureInfo("de-DE")));
+            // Key missing from the translation falls back to the English base.
+            Assert.Equal("OnlyInEnglish", svc.GetString("EnglishOnly", CultureInfo.GetCultureInfo("de-AT")));
+            // Unsupported culture falls back to English.
+            Assert.Equal("Hello", svc.GetString("Greeting", CultureInfo.GetCultureInfo("es-ES")));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Corrupt_translation_file_falls_back_to_english_without_throwing()
+    {
+        var dir = CreateTempLanguages(new Dictionary<string, string>
+        {
+            ["en"] = "{ \"Greeting\": \"Hello\" }",
+            ["de"] = "{ this is not valid json ",
+        });
+        try
+        {
+            var svc = new LocalizationService(dir);
+
+            // The corrupt de.json overlay is skipped; the English base is used.
+            Assert.Equal("Hello", svc.GetString("Greeting", CultureInfo.GetCultureInfo("de-DE")));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Corrupt_english_base_falls_back_to_embedded_defaults()
+    {
+        var dir = CreateTempLanguages(new Dictionary<string, string>
+        {
+            ["en"] = "{ broken json ",
+        });
+        try
+        {
+            var svc = new LocalizationService(dir);
+
+            // en.json is unreadable, so the embedded English reference is used.
+            Assert.Equal("Storage", svc.GetString("TileStorage", CultureInfo.GetCultureInfo("en-US")));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Missing_languages_folder_falls_back_to_embedded_defaults()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "TrayLightLangMissing_" + Guid.NewGuid().ToString("N"));
+        // Intentionally not created.
+
+        var svc = new LocalizationService(dir);
+
+        // No files at all -> embedded en.json supplies the reference values.
+        Assert.Equal("Computer Name", svc.GetString("TileComputerName", CultureInfo.GetCultureInfo("de-DE")));
+    }
+
+    [Fact]
+    public void Unknown_key_returns_the_key_itself()
+    {
+        var dir = CreateTempLanguages(new Dictionary<string, string>
+        {
+            ["en"] = "{ \"Greeting\": \"Hello\" }",
+        });
+        try
+        {
+            var svc = new LocalizationService(dir);
+            Assert.Equal("NoSuchKey", svc.GetString("NoSuchKey", CultureInfo.GetCultureInfo("en-US")));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
     }
 }

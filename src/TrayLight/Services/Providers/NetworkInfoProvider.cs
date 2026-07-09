@@ -69,24 +69,28 @@ public sealed class NetworkInfoProvider : InfoItemProviderBase
 
     private static NetworkSnapshot BuildSnapshot()
     {
-        var nic = NetworkInterface.GetAllNetworkInterfaces()
-            .Where(n => n.OperationalStatus == OperationalStatus.Up)
-            .Where(n => n.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
-                        n.NetworkInterfaceType != NetworkInterfaceType.Tunnel)
-            .OrderByDescending(n => n.Speed)
-            .FirstOrDefault();
+        // Selection prefers the adapter that owns the default gateway (real
+        // connectivity) and only hard-excludes APIPA (169.254.x.x) addresses,
+        // so a Hyper-V host whose active link runs through a "vEthernet"
+        // External Switch still reports online.
+        var selection = NetworkAdapterSelector.SelectBest(
+            NetworkAdapterSelector.EnumerateLiveAdapters());
 
-        if (nic is null) return new NetworkSnapshot(NetworkKind.Offline, string.Empty, string.Empty);
+        if (selection is null)
+            return new NetworkSnapshot(NetworkKind.Offline, string.Empty, string.Empty);
 
-        var ipv4 = nic.GetIPProperties().UnicastAddresses
-            .FirstOrDefault(a => a.Address.AddressFamily == AddressFamily.InterNetwork)
-            ?.Address.ToString() ?? string.Empty;
+        var adapter = selection.Adapter;
+        var ipv4 = selection.IPv4;
 
-        if (nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+        // Display name is derived from the medium (NetworkInterfaceType), never
+        // from the raw adapter name: a vEthernet External Switch reports as
+        // Ethernet, so it shows "Ethernet" (or the Wi-Fi SSID) rather than the
+        // "vEthernet (…)" adapter name.
+        if (adapter.Type == NetworkInterfaceType.Wireless80211)
         {
             // Try to get the SSID via the native WlanAPI. Falls back to the
             // adapter name when the Wi-Fi subsystem is unavailable.
-            var ssid = TryGetWifiSsidNative(nic.Id) ?? nic.Name;
+            var ssid = TryGetWifiSsidNative(adapter.Id) ?? adapter.Name;
             return new NetworkSnapshot(NetworkKind.WiFi, ssid, ipv4);
         }
 

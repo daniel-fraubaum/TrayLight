@@ -53,6 +53,24 @@
                            MaxHeight="34"
                            ToolTip="{Binding ValueTooltip}"
                            Margin="0,2,0,0" />
+                <!-- Optional second line (e.g. the network tile's IPv4). A
+                     left-aligned Viewbox with StretchDirection=DownOnly shrinks
+                     the text only when it would overflow, so a full 15-char
+                     IPv4 (255.255.255.255) always fits without truncation. The
+                     full value stays available via the tooltip. -->
+                <Viewbox HorizontalAlignment="Left"
+                         StretchDirection="DownOnly"
+                         Stretch="Uniform"
+                         MaxHeight="16"
+                         Margin="0,1,0,0"
+                         Visibility="{Binding ValueSecondLine, Converter={x:Static vm:NonEmptyToVisibilityConverter.Instance}}">
+                    <TextBlock Text="{Binding ValueSecondLine}"
+                               Style="{StaticResource BodyTextStyle}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               TextWrapping="NoWrap"
+                               ToolTip="{Binding ValueTooltip}" />
+                </Viewbox>
             </StackPanel>
         </Grid>
     </Button>

@@ -65,7 +65,7 @@
       <string id="LogLevel_Critical">Critical</string>
 
       <!-- Info items -->
-      <string id="Pol_InfoItem_Help">Configure this information tile. Enable the policy to show the tile; set it to Disabled or Not Configured to hide it. Position controls grid order (0 - 7); use a negative value to hide. Title and Icon override the built-in defaults; Icon takes a Segoe Fluent Icons code such as E977. ShowNotificationBadge = 1 highlights the tile when it raises a warning.</string>
+      <string id="Pol_InfoItem_Help">Configure this information tile. Enable the policy to show the tile. Position controls grid order (0-7). Leave Title EMPTY to use the built-in default, which is automatically localized to the Windows display language (English, German, French). Only enter a Title if you want to override the localized default. Icon takes a Segoe Fluent Icons code such as E977.</string>
       <string id="Pol_InfoItem_ComputerName">Tile: Computer name</string>
       <string id="Pol_InfoItem_OsVersion">Tile: Operating system version</string>
       <string id="Pol_InfoItem_LastReboot">Tile: Last reboot / uptime</string>
@@ -124,26 +124,26 @@
       <!-- Info item presentations -->
       <presentation id="Pol_InfoItem_ComputerName">
         <decimalTextBox refId="InfoItem_ComputerName_Position" defaultValue="0">Position (0 - 7):</decimalTextBox>
-        <textBox refId="InfoItem_ComputerName_Title"><label>Title:</label><defaultValue>Computer Name</defaultValue></textBox>
+        <textBox refId="InfoItem_ComputerName_Title"><label>Title (leave empty for localized default):</label></textBox>
         <textBox refId="InfoItem_ComputerName_Icon"><label>Icon (Segoe Fluent code). Default: E977 = Computer:</label><defaultValue>E977</defaultValue></textBox>
       </presentation>
 
       <presentation id="Pol_InfoItem_OsVersion">
         <decimalTextBox refId="InfoItem_OsVersion_Position" defaultValue="1">Position (0 - 7):</decimalTextBox>
-        <textBox refId="InfoItem_OsVersion_Title"><label>Title:</label><defaultValue>OS Version</defaultValue></textBox>
+        <textBox refId="InfoItem_OsVersion_Title"><label>Title (leave empty for localized default):</label></textBox>
         <textBox refId="InfoItem_OsVersion_Icon"><label>Icon (Segoe Fluent code). Default: E770 = Windows logo:</label><defaultValue>E770</defaultValue></textBox>
       </presentation>
 
       <presentation id="Pol_InfoItem_LastReboot">
         <decimalTextBox refId="InfoItem_LastReboot_Position" defaultValue="2">Position (0 - 7):</decimalTextBox>
-        <textBox refId="InfoItem_LastReboot_Title"><label>Title:</label><defaultValue>Last Reboot</defaultValue></textBox>
+        <textBox refId="InfoItem_LastReboot_Title"><label>Title (leave empty for localized default):</label></textBox>
         <textBox refId="InfoItem_LastReboot_Icon"><label>Icon (Segoe Fluent code). Default: E777 = Clock:</label><defaultValue>E777</defaultValue></textBox>
         <decimalTextBox refId="InfoItem_LastReboot_Badge" defaultValue="1">Show notification badge (0 or 1):</decimalTextBox>
       </presentation>
 
       <presentation id="Pol_InfoItem_StorageUsed">
         <decimalTextBox refId="InfoItem_StorageUsed_Position" defaultValue="3">Position (0 - 7):</decimalTextBox>
-        <textBox refId="InfoItem_StorageUsed_Title"><label>Title:</label><defaultValue>Storage</defaultValue></textBox>
+        <textBox refId="InfoItem_StorageUsed_Title"><label>Title (leave empty for localized default):</label></textBox>
         <textBox refId="InfoItem_StorageUsed_Icon"><label>Icon (Segoe Fluent code). Default: EDA2 = Hard drive:</label><defaultValue>EDA2</defaultValue></textBox>
         <decimalTextBox refId="InfoItem_StorageUsed_Badge" defaultValue="1">Show notification badge (0 or 1):</decimalTextBox>
         <decimalTextBox refId="InfoItem_StorageUsed_Limit" defaultValue="90">Warning threshold (% used):</decimalTextBox>
@@ -151,19 +151,19 @@
 
       <presentation id="Pol_InfoItem_NetworkInfo">
         <decimalTextBox refId="InfoItem_NetworkInfo_Position" defaultValue="4">Position (0 - 7):</decimalTextBox>
-        <textBox refId="InfoItem_NetworkInfo_Title"><label>Title:</label><defaultValue>Network</defaultValue></textBox>
+        <textBox refId="InfoItem_NetworkInfo_Title"><label>Title (leave empty for localized default):</label></textBox>
         <textBox refId="InfoItem_NetworkInfo_Icon"><label>Icon (Segoe Fluent code). Default: E839 = Network:</label><defaultValue>E839</defaultValue></textBox>
       </presentation>
 
       <presentation id="Pol_InfoItem_SerialNumber">
         <decimalTextBox refId="InfoItem_SerialNumber_Position" defaultValue="4">Position (0 - 7):</decimalTextBox>
-        <textBox refId="InfoItem_SerialNumber_Title"><label>Title:</label><defaultValue>Serial Number</defaultValue></textBox>
+        <textBox refId="InfoItem_SerialNumber_Title"><label>Title (leave empty for localized default):</label></textBox>
         <textBox refId="InfoItem_SerialNumber_Icon"><label>Icon (Segoe Fluent code). Default: E950 = Tag/Barcode:</label><defaultValue>E950</defaultValue></textBox>
       </presentation>
 
       <presentation id="Pol_InfoItem_IntuneSync">
         <decimalTextBox refId="InfoItem_IntuneSync_Position" defaultValue="5">Position (0 - 7):</decimalTextBox>
-        <textBox refId="InfoItem_IntuneSync_Title"><label>Title:</label><defaultValue>Intune Sync</defaultValue></textBox>
+        <textBox refId="InfoItem_IntuneSync_Title"><label>Title (leave empty for localized default):</label></textBox>
         <textBox refId="InfoItem_IntuneSync_Icon"><label>Icon (Segoe Fluent code). Default: E895 = Sync:</label><defaultValue>E895</defaultValue></textBox>
       </presentation>
 

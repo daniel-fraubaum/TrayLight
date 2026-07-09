@@ -13,6 +13,9 @@
 ## Features
 
 - System Tray icon with a modern Windows 11 Fluent Design popup
+- **Tray-icon hover tooltip** — hovering the tray icon shows a compact device
+  summary (computer name, IP address, last Intune sync, and any active warning
+  count) without opening the full popup; localized like the rest of the UI
 - Tray-icon state swap: shows a warning variant
   (`Assets/app-warning.ico`) whenever any info tile reports a real warning,
   otherwise the normal icon (`Assets/app-normal.ico`)
@@ -24,7 +27,11 @@
   - **Serial Number** — hardware serial via WMI (with VM detection); click to copy
   - **Intune Sync** — time since last MDM check-in; click to trigger a sync
 - **Additional tiles available via ADMX** (not enabled by default):
-  - **Network Info** — active SSID/Ethernet + IPv4
+  - **Network Info** — active SSID/Ethernet + IPv4. Adapter detection ignores
+    virtual adapters (Hyper-V, VMware, VirtualBox, vEthernet, WSL, TAP/Npcap)
+    and APIPA (169.254.x.x) addresses, preferring the physical Ethernet/Wi-Fi
+    adapter that owns the default gateway, so the real device IP is shown even
+    on machines running Hyper-V or VMware.
 - Up to **6 configurable Quick Action shortcut buttons** (URL / App / Command),
   each with its own title, subtitle, icon and position via ADMX
 - **Dynamic placeholders** in shortcut actions — embed `{{ComputerName}}`,
@@ -36,8 +43,9 @@
   ADMX policy.
 - Toast notifications for warnings raised by info tiles
 - **Multi-language UI** — auto-detects the Windows display language; ships with
-  English, German and French, and any other language can be supplied entirely
-  via ADMX text overrides (see [Localization](#localization))
+  English, German and French as runtime JSON files, and any other language can
+  be added by dropping a JSON file into the `Languages` folder — no rebuild
+  required (see [Localization](#localization))
 - Light / Dark theme follows the Windows system setting
 - WPF with drop-shadow on Windows 11
 - Welcome screen on first launch
@@ -160,46 +168,67 @@ TrayLight supports multiple languages out of the box. On startup it
 messages, menu items and dialogs — in the matching language. No manual language
 switch is required.
 
+Translations are plain **JSON files** loaded at runtime from the `Languages`
+folder next to the executable (`C:\Program Files\TrayLight\Languages\`). There
+are no compiled `.resx` satellite assemblies, so a new language is just a file
+drop — **no rebuild required**.
+
 **Built-in languages:**
 
-| Language | Culture | Status |
-|----------|---------|--------|
-| English  | `en`    | Default / fallback |
-| German   | `de`    | Full |
-| French   | `fr`    | Full |
+| Language | File      | Status |
+|----------|-----------|--------|
+| English  | `en.json` | Default / reference / fallback |
+| German   | `de.json` | Full |
+| French   | `fr.json` | Full |
 
-Regional variants resolve to their base language (e.g. `de-AT` → German,
-`fr-CA` → French). Additional languages can be contributed by the community via
-Pull Request — just add a new `Strings.<culture>.resx` file (see
-*Contributing a translation* below).
+### How resolution works
 
-**Any language, no code change.** For a language without a built-in
-translation, admins can configure every visible string via **ADMX policy** —
-tile titles, shortcut labels, the header (branding) title, footer text and the
-info-text block. This means *any* language is supported without code changes,
-without a PR and without waiting for a new release.
+`en.json` is **always** loaded first as the base, then the file matching the
+Windows display language is overlaid on top. Any key missing from a translation
+therefore falls back to English automatically (never blank). The match order is:
 
-### Priority order
+1. **Exact culture file** — e.g. `de-AT.json`
+2. **Language file** — e.g. `de.json`
+3. **English** — `en.json` (the neutral base)
 
-For every piece of UI text, TrayLight resolves it in this order:
+Regional variants resolve to their base language (e.g. `de-AT` → `de.json`,
+`fr-CA` → `fr.json`). If the `Languages` folder is missing or a file is corrupt,
+TrayLight falls back to an embedded copy of `en.json`, logs a warning and keeps
+running.
 
-1. **ADMX policy value** — if configured, it always wins.
-2. **Built-in translation** matching the Windows display language.
-3. **English** — the neutral fallback when neither of the above applies.
+### Three ways to get a language
 
-### Example: Spanish without a Spanish translation
+**1. Use a built-in language (EN / DE / FR).** Nothing to do — the app picks the
+right one from the Windows display language.
 
-A Spanish admin deploys TrayLight. No `Strings.es.resx` exists, so the built-in
-UI would fall back to English. Instead, the admin sets all tile titles, the
-header title, shortcut labels, footer and info text to Spanish via the **Intune
-Settings Catalog** (ADMX). Done — the app is fully Spanish. No code change, no
-PR, no waiting for a new release.
+**2. Drop a custom JSON file — no rebuild needed.** To add e.g. Dutch, copy
+`en.json` to `nl.json`, translate the values, place it in
+`C:\Program Files\TrayLight\Languages\`, and restart TrayLight. That's it. This
+is fully deployable at scale via a script or an **Intune Win32 app** (see
+[INTUNE-DEPLOYMENT.md](docs/INTUNE-DEPLOYMENT.md#3e-deploying-custom-language-files)).
+Only keys you translate need to be present; anything omitted falls back to
+English.
 
-### Contributing a translation
+Example `nl.json` (partial — untranslated keys fall back to English):
 
-Add a new `Strings.<culture>.resx` file under `src/TrayLight/Resources/` (copy
-`Strings.resx` and translate the values), then open a pull request. No code
-changes are needed — the new satellite assembly is picked up automatically.
+```json
+{
+  "TileComputerName": "Computernaam",
+  "TileNetwork": "Netwerk",
+  "QuickActions": "Snelle acties",
+  "MenuQuit": "Afsluiten"
+}
+```
+
+**3. Contribute a translation via PR.** Add a new `<language>.json` under
+`src/TrayLight/Languages/` (copy `en.json`, keep the keys, translate the
+values) and open a pull request so the language ships built-in for everyone. Use
+`en.json` as the complete reference key list.
+
+> **Tip:** ADMX policy values still override any localized string. If you only
+> need to rename a few tiles/labels for one language, you can also set them via
+> the **Intune Settings Catalog** (ADMX) without touching a JSON file — the
+> policy value always wins.
 
 ## Author
 

@@ -1,40 +1,34 @@
 using System.Globalization;
-using System.Resources;
+using TrayLight.Services;
 
 namespace TrayLight.Resources;
 
 /// <summary>
-/// Strongly-typed accessor for the localized UI strings stored in
-/// <c>Strings.resx</c> (English, neutral fallback), <c>Strings.de.resx</c>
-/// (German) and <c>Strings.fr.resx</c> (French).
+/// Strongly-typed accessor for the localized UI strings. The values now come
+/// from the runtime, file-based <see cref="LocalizationService"/> (JSON files in
+/// the <c>Languages</c> folder) rather than compiled <c>.resx</c> satellite
+/// assemblies, so new languages can be added by dropping a file next to the
+/// executable without rebuilding the app.
 ///
 /// <para>
-/// The <see cref="ResourceManager"/> resolves the active language from
-/// <see cref="CultureInfo.CurrentUICulture"/> at lookup time and falls back to
-/// the neutral (English) resource when no satellite assembly matches — so a
-/// culture such as <c>de-AT</c> automatically uses the <c>de</c> resources and
-/// any unknown culture lands on English. This is a hand-written accessor (not
-/// the VS designer file) so the strongly-typed members are available in plain
-/// <c>dotnet build</c> CLI scenarios without relying on the IDE code generator.
+/// This facade is kept because the WPF views bind to it via
+/// <c>{x:Static res:Strings.X}</c> and the strongly-typed members give
+/// compile-time safety in C#. Every member simply delegates to
+/// <see cref="LocalizationService.Instance"/>.
 /// </para>
 /// </summary>
 public static class Strings
 {
-    private static readonly ResourceManager Manager =
-        new(typeof(Strings).FullName!, typeof(Strings).Assembly);
-
     /// <summary>
     /// Looks up a resource by key for the current UI culture, falling back to
     /// the key itself when the resource is missing (so a typo is visible rather
     /// than throwing at runtime).
     /// </summary>
-    public static string Get(string key) =>
-        Manager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+    public static string Get(string key) => LocalizationService.Instance.GetString(key);
 
     /// <summary>
     /// Looks up a composite-format resource by key and formats it with
-    /// <paramref name="args"/> using the invariant culture (the surrounding
-    /// numbers are already culture-neutral integers).
+    /// <paramref name="args"/> using the current culture.
     /// </summary>
     public static string Format(string key, params object[] args) =>
         string.Format(CultureInfo.CurrentCulture, Get(key), args);
