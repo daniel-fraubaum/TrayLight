@@ -80,6 +80,15 @@
       <elements><text id="Branding_CompanyName_Value" valueName="CompanyName" maxLength="1023" /></elements>
     </policy>
 
+    <policy name="Branding_HideAttribution" class="Machine" displayName="$(string.Pol_Branding_HideAttribution)"
+            explainText="$(string.Pol_Branding_HideAttribution_Help)"
+            key="SOFTWARE\Policies\TrayLight\Branding" valueName="HideAttribution">
+      <parentCategory ref="Branding" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <enabledValue><decimal value="1" /></enabledValue>
+      <disabledValue><decimal value="0" /></disabledValue>
+    </policy>
+
     <!-- ===== Behavior ===== -->
     <policy name="Behavior_AutoStart" class="Machine" displayName="$(string.Pol_Behavior_AutoStart)"
             explainText="$(string.Pol_Behavior_AutoStart_Help)"

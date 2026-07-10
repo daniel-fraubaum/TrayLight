@@ -49,6 +49,41 @@ public class ConfigurationServiceTests
     }
 
     [Fact]
+    public void Load_HideAttribution_NotSet_DefaultsToVisible()
+    {
+        using var svc = new ConfigurationService(new InMemoryRegistrySource());
+
+        var cfg = svc.Load();
+
+        // Not configured => attribution line is visible (HideAttribution false).
+        Assert.False(cfg.Branding.HideAttribution);
+    }
+
+    [Fact]
+    public void Load_HideAttribution_Zero_KeepsAttributionVisible()
+    {
+        var src = new InMemoryRegistrySource()
+            .Set("Branding", "HideAttribution", 0);
+        using var svc = new ConfigurationService(src);
+
+        svc.Load();
+
+        Assert.False(svc.Current.Branding.HideAttribution);
+    }
+
+    [Fact]
+    public void Load_HideAttribution_One_HidesAttribution()
+    {
+        var src = new InMemoryRegistrySource()
+            .Set("Branding", "HideAttribution", 1);
+        using var svc = new ConfigurationService(src);
+
+        svc.Load();
+
+        Assert.True(svc.Current.Branding.HideAttribution);
+    }
+
+    [Fact]
     public void Load_BehaviorAndLogging_AreReadAsDwords()
     {
         var src = new InMemoryRegistrySource()

@@ -27,6 +27,8 @@
       <string id="Pol_Branding_TrayIcon_Help">Optional path to an .ico file used for the system tray icon.</string>
       <string id="Pol_Branding_CompanyName">Company name</string>
       <string id="Pol_Branding_CompanyName_Help">Shown in the About dialog and welcome screen.</string>
+      <string id="Pol_Branding_HideAttribution">Hide attribution line</string>
+      <string id="Pol_Branding_HideAttribution_Help">Hides the 'Powered by headsinthecloud.blog' line in the popup footer. When not configured or disabled, the line is shown. Note: the attribution in the About dialog is not affected by this setting.</string>
 
       <!-- Behavior -->
       <string id="Pol_Behavior_AutoStart">Auto-start at logon</string>

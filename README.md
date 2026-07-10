@@ -93,6 +93,14 @@ The `Branding\Logo` policy accepts either a URL or a local file path:
   package and is installed to `C:\Program Files\TrayLight\Assets\logo.png`.
   Set `Logo = C:\Program Files\TrayLight\Assets\logo.png` in policy.
 
+### Hide the attribution line
+
+Set `Branding\HideAttribution = 1` to hide the "Powered by
+headsinthecloud.blog" line in the popup footer. When the policy is not
+configured or disabled (`0`), the line is shown (default). The attribution in
+the About dialog ("Created by headsinthecloud.blog") is not affected and always
+stays visible.
+
 ## Tray icon visibility
 
 After installation, the TrayLight icon may appear in the taskbar overflow

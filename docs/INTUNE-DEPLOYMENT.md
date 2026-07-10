@@ -109,7 +109,9 @@ template is shipped with each release (and lives in
 2. Create a new **Imported Administrative templates** profile. The
    template exposes the full configuration surface:
 
-   - **Branding** — Title, AccentColor, Logo, TrayIcon, CompanyName
+   - **Branding** — Title, AccentColor, Logo, TrayIcon, CompanyName,
+     HideAttribution (hides the "Powered by" footer line; About dialog
+     unaffected)
    - **Behavior** — AutoStart, RefreshIntervalMinutes, ShowWelcomeScreen,
      NotifyOnUpdates, RebootWarningDays
    - **Footer** — Text, ShowLastSync, InfoText

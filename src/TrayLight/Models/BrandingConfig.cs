@@ -21,4 +21,12 @@ public class BrandingConfig
 
     [JsonPropertyName("companyName")]
     public string CompanyName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// When <c>true</c>, hides the "Powered by headsinthecloud.blog" line in the
+    /// popup footer. Default <c>false</c> (the line is shown). The About dialog
+    /// attribution is never affected by this setting.
+    /// </summary>
+    [JsonPropertyName("hideAttribution")]
+    public bool HideAttribution { get; set; }
 }

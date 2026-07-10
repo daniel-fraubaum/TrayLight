@@ -28,6 +28,7 @@ UI; raw OMA-URI values still work and are documented here for reference.
 | `Branding`                      | `Logo`                      | REG_SZ    | URL (https://...) or local path of header logo. URLs are cached.    |
 | `Branding`                      | `TrayIcon`                  | REG_SZ    | Path to a custom `.ico`.                                             |
 | `Branding`                      | `CompanyName`               | REG_SZ    | Shown in About / Welcome.                                            |
+| `Branding`                      | `HideAttribution`           | REG_DWORD | `1` hides the "Powered by" line in the popup footer. Default `0` (shown). About dialog unaffected. |
 | `Behavior`                      | `AutoStart`                 | REG_DWORD | `0`/`1`.                                                             |
 | `Behavior`                      | `RefreshIntervalMinutes`    | REG_DWORD | `0` disables.                                                        |
 | `Behavior`                      | `ShowWelcomeScreen`         | REG_DWORD | `0`/`1`.                                                             |

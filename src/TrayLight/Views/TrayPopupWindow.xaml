@@ -247,7 +247,8 @@
 
                 <TextBlock Grid.Column="1"
                            Style="{StaticResource PoweredByStyle}"
-                           VerticalAlignment="Center">
+                           VerticalAlignment="Center"
+                           Visibility="{Binding ShowAttribution, Converter={x:Static vm:BoolToVisibilityConverter.Instance}}">
                     <Run Text="{Binding PoweredBy, Mode=OneWay}" />
                     <Hyperlink NavigateUri="{Binding PoweredByLinkUrl}"
                                RequestNavigate="PoweredBy_RequestNavigate"

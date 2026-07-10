@@ -56,6 +56,13 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
     [ObservableProperty] private DateTime? _lastSyncUtc;
     [ObservableProperty] private bool   _showLastSync = true;
 
+    /// <summary>
+    /// Controls the "Powered by headsinthecloud.blog" line in the popup footer.
+    /// False only when the Branding\HideAttribution policy is explicitly enabled.
+    /// The About dialog attribution is never affected by this.
+    /// </summary>
+    [ObservableProperty] private bool   _showAttribution = true;
+
     public ObservableCollection<InfoItemViewModel> InfoItems { get; } = new();
     public ObservableCollection<ShortcutViewModel> Shortcuts { get; } = new();
     public ObservableCollection<InfoTextLine>      InfoTextLines { get; } = new();
@@ -207,6 +214,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         AccentBrush  = ParseAccent(config.Branding.AccentColor);
         FooterText   = config.Footer.Text;
         ShowLastSync = config.Footer.ShowLastSync;
+        ShowAttribution = !config.Branding.HideAttribution;
 
         InfoTextLines.Clear();
         foreach (var line in InfoTextParser.Parse(config.Footer.InfoText))
