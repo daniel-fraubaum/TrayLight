@@ -42,6 +42,7 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
     private readonly IPopupPositioningService _positioning;
     private readonly INotificationBadgeService _badges;
     private readonly IConfigurationService _config;
+    private readonly AppRefreshService _appRefresh;
     private readonly ILogger<TrayIconViewModel> _log;
     private readonly HttpClient _http;
 
@@ -61,12 +62,14 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
         IPopupPositioningService positioning,
         INotificationBadgeService badges,
         IConfigurationService config,
+        AppRefreshService appRefresh,
         ILogger<TrayIconViewModel> log)
     {
         _services       = services;
         _positioning    = positioning;
         _badges         = badges;
         _config         = config;
+        _appRefresh     = appRefresh;
         _log            = log;
 
         _http = new HttpClient { Timeout = HttpTimeout };
@@ -86,6 +89,21 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
             else
                 dispatcher.BeginInvoke(() => ApplyBadgeState(state));
         };
+
+        // The hover tooltip embeds live values (IP, Intune sync time, warning
+        // count) that change every cycle even when the badge state does not, so
+        // it must be rebuilt on every AppRefreshService tick - not only on
+        // BadgeChanged - otherwise it shows a stale sync time versus the tiles.
+        _appRefresh.RefreshCompleted += OnRefreshCompleted;
+    }
+
+    private void OnRefreshCompleted(object? sender, DateTime completedAtUtc)
+    {
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+            _ = RefreshTooltipAsync(_badges.Current);
+        else
+            dispatcher.BeginInvoke(() => _ = RefreshTooltipAsync(_badges.Current));
     }
 
     private void ApplyBadgeState(BadgeState state)
@@ -142,9 +160,10 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
             Environment.MachineName,
         };
 
-        // Line 2 — IPv4 of the selected physical adapter (empty => offline).
+        // Line 2 — IPv4 of the routing-active adapter (empty => offline).
         var selection = Services.Providers.NetworkAdapterSelector.SelectBest(
-            Services.Providers.NetworkAdapterSelector.EnumerateLiveAdapters());
+            Services.Providers.NetworkAdapterSelector.EnumerateLiveAdapters(),
+            Services.Providers.NetworkAdapterSelector.GetRouteInterfaceIndex());
         lines.Add(string.IsNullOrEmpty(selection?.IPv4)
             ? Resources.Strings.StatusOffline
             : selection!.IPv4);
@@ -351,6 +370,7 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         _config.PropertyChanged -= OnConfigChanged;
+        _appRefresh.RefreshCompleted -= OnRefreshCompleted;
         _http.Dispose();
         GC.SuppressFinalize(this);
     }

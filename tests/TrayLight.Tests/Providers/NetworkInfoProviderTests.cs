@@ -59,4 +59,75 @@ public class NetworkInfoProviderTests
 
         Assert.Equal("Segoe Fluent Icons:E946", data.Icon);
     }
+
+    [Fact]
+    public void Tooltip_lists_all_active_adapters_with_the_active_marker_first()
+    {
+        var original = System.Globalization.CultureInfo.CurrentUICulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentUICulture =
+                System.Globalization.CultureInfo.GetCultureInfo("en-US");
+
+            var eth = new NetworkAdapterSelector.ActiveAdapter(
+                new NetworkAdapterSelector.AdapterInfo("Ethernet", "Intel NIC",
+                    System.Net.NetworkInformation.NetworkInterfaceType.Ethernet,
+                    IsUp: true, HasGateway: true, IPv4Addresses: new[] { "192.168.170.131" },
+                    Id: "", InterfaceIndex: 11),
+                "192.168.170.131", NetworkAdapterSelector.ConnectionKind.Ethernet, IsActive: true);
+
+            var vpn = new NetworkAdapterSelector.ActiveAdapter(
+                new NetworkAdapterSelector.AdapterInfo("Corp VPN", "PPP",
+                    System.Net.NetworkInformation.NetworkInterfaceType.Ppp,
+                    IsUp: true, HasGateway: false, IPv4Addresses: new[] { "195.169.220.167" },
+                    Id: "", InterfaceIndex: 22),
+                "195.169.220.167", NetworkAdapterSelector.ConnectionKind.Vpn, IsActive: false);
+
+            var tooltip = NetworkDisplay.BuildTooltip(new[] { eth, vpn });
+
+            Assert.Equal(
+                "Ethernet: 192.168.170.131 (active)\nVPN: 195.169.220.167",
+                tooltip);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = original;
+        }
+    }
+
+    [Fact]
+    public void Tooltip_appends_ssid_to_wireless_entries()
+    {
+        var original = System.Globalization.CultureInfo.CurrentUICulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentUICulture =
+                System.Globalization.CultureInfo.GetCultureInfo("en-US");
+
+            var wifi = new NetworkAdapterSelector.ActiveAdapter(
+                new NetworkAdapterSelector.AdapterInfo("Wi-Fi", "Intel Wi-Fi 6",
+                    System.Net.NetworkInformation.NetworkInterfaceType.Wireless80211,
+                    IsUp: true, HasGateway: true, IPv4Addresses: new[] { "10.0.0.4" },
+                    Id: "wifi-guid", InterfaceIndex: 5),
+                "10.0.0.4", NetworkAdapterSelector.ConnectionKind.WiFi, IsActive: true);
+
+            var eth = new NetworkAdapterSelector.ActiveAdapter(
+                new NetworkAdapterSelector.AdapterInfo("Ethernet", "Intel NIC",
+                    System.Net.NetworkInformation.NetworkInterfaceType.Ethernet,
+                    IsUp: true, HasGateway: true, IPv4Addresses: new[] { "192.168.1.50" },
+                    Id: "", InterfaceIndex: 6),
+                "192.168.1.50", NetworkAdapterSelector.ConnectionKind.Ethernet, IsActive: false);
+
+            // Inject the SSID resolver so the test doesn't depend on live Wi-Fi.
+            var tooltip = NetworkDisplay.BuildTooltip(new[] { wifi, eth }, ssidResolver: _ => "CorpNet");
+
+            Assert.Equal(
+                "WiFi CorpNet: 10.0.0.4 (active)\nEthernet: 192.168.1.50",
+                tooltip);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = original;
+        }
+    }
 }

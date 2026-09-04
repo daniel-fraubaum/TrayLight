@@ -71,7 +71,6 @@ public static class Strings
     public static string TileNetwork           => Get(nameof(TileNetwork));
     public static string TileSerialNumber      => Get(nameof(TileSerialNumber));
     public static string TileIntuneSync        => Get(nameof(TileIntuneSync));
-    public static string TileEntraId           => Get(nameof(TileEntraId));
     public static string TileInfo              => Get(nameof(TileInfo));
 
     // --- Status / value strings -------------------------------------------
@@ -83,8 +82,18 @@ public static class Strings
     public static string StatusOffline         => Get(nameof(StatusOffline));
     public static string StatusVirtualMachineSerial => Get(nameof(StatusVirtualMachineSerial));
     public static string NetworkEthernet       => Get(nameof(NetworkEthernet));
+    public static string NetworkWifi           => Get(nameof(NetworkWifi));
+    public static string NetworkVpn            => Get(nameof(NetworkVpn));
+    public static string NetworkActiveMarker   => Get(nameof(NetworkActiveMarker));
     public static string RelativeUnknown       => Get(nameof(RelativeUnknown));
     public static string RelativeJustNow       => Get(nameof(RelativeJustNow));
+
+    // --- Tile tooltips -----------------------------------------------------
+    public static string TooltipClickToCopy           => Get("Tooltip_ClickToCopy");
+    public static string TooltipClickToSyncNow        => Get("Tooltip_ClickToSyncNow");
+    public static string TooltipNotIntuneManaged      => Get("Tooltip_NotIntuneManaged");
+    public static string TooltipIntuneSyncTimeUnknown => Get("Tooltip_IntuneSyncTimeUnknown");
+    public static string TooltipNoNetworkConnection   => Get("Tooltip_NoNetworkConnection");
 
     // --- Quick Actions defaults -------------------------------------------
     public static string DefaultShortcutTitle    => Get(nameof(DefaultShortcutTitle));

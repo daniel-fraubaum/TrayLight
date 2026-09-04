@@ -11,7 +11,6 @@ public enum InfoItemType
     LastReboot,
     StorageUsed,
     NetworkInfo,
-    EntraIdStatus,
     SerialNumber,
     IntuneSync
 }

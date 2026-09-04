@@ -1,4 +1,5 @@
 using TrayLight.Models;
+using TrayLight.Services;
 using TrayLight.Services.Providers;
 using Xunit;
 
@@ -7,30 +8,34 @@ namespace TrayLight.Tests.Providers;
 public class LastRebootProviderTests
 {
     [Fact]
-    public async Task Less_than_24h_shows_Today()
+    public async Task Less_than_24h_uses_shared_uptime_formatter()
     {
+        var uptime = TimeSpan.FromHours(3);
         var sut = new LastRebootProvider(
-            uptimeProvider: () => TimeSpan.FromHours(3),
+            uptimeProvider: () => uptime,
             shellRunner: (_, _) => { });
         sut.Configure(new InfoItemConfig());
 
         var data = await sut.GetDataAsync();
 
-        Assert.Equal("Today", data.Value);
+        // Same shared, localized formatter the tile uses - never the old "Today".
+        Assert.Equal(RelativeTimeFormatter.FormatUptime(uptime), data.Value);
+        Assert.NotEqual("Today", data.Value);
         Assert.False(data.HasWarning);
     }
 
     [Fact]
-    public async Task Multi_day_uptime_formatted_with_days_and_hours()
+    public async Task Multi_day_uptime_uses_shared_uptime_formatter()
     {
+        var uptime = TimeSpan.FromHours(24 * 5 + 7);
         var sut = new LastRebootProvider(
-            uptimeProvider: () => TimeSpan.FromHours(24 * 5 + 7),
+            uptimeProvider: () => uptime,
             shellRunner: (_, _) => { });
         sut.Configure(new InfoItemConfig());
 
         var data = await sut.GetDataAsync();
 
-        Assert.Equal("5 d, 7 h ago", data.Value);
+        Assert.Equal(RelativeTimeFormatter.FormatUptime(uptime), data.Value);
     }
 
     [Fact]

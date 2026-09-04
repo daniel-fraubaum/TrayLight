@@ -1,16 +1,14 @@
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using System.Text;
 
 namespace TrayLight.Services.Providers;
 
 /// <summary>
-/// Active network connection: SSID for Wi-Fi, "Ethernet" otherwise, plus the
-/// local IPv4. Icon switches between Wi-Fi and Ethernet glyphs.
-/// Uses <see cref="NetworkInterface"/> for adapter enumeration and the native
-/// <c>wlanapi.dll</c> for Wi-Fi SSID — no external processes.
+/// Active network connection: SSID for Wi-Fi, "VPN" for tunnel/PPP adapters,
+/// "Ethernet" otherwise, plus the IPv4 of the interface the routing table would
+/// actually use to reach the internet (route-based, so a VPN IP wins over the
+/// local LAN IP). Icon switches between Wi-Fi and Ethernet glyphs. Uses
+/// <see cref="NetworkAdapterSelector"/> for route/adapter detection and the
+/// native <c>wlanapi.dll</c> for the Wi-Fi SSID — no external processes.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class NetworkInfoProvider : InfoItemProviderBase
@@ -69,105 +67,26 @@ public sealed class NetworkInfoProvider : InfoItemProviderBase
 
     private static NetworkSnapshot BuildSnapshot()
     {
-        // Selection prefers the adapter that owns the default gateway (real
-        // connectivity) and only hard-excludes APIPA (169.254.x.x) addresses,
-        // so a Hyper-V host whose active link runs through a "vEthernet"
-        // External Switch still reports online.
-        var selection = NetworkAdapterSelector.SelectBest(
-            NetworkAdapterSelector.EnumerateLiveAdapters());
+        // Route-based selection: the IPv4 of the interface Windows would use to
+        // reach the internet, so a full-tunnel VPN reports the VPN IP, a
+        // split-tunnel reports the actually-routed link, and a Hyper-V host
+        // reports its External-Switch address. See NetworkAdapterSelector.
+        var summary = NetworkDisplay.Describe();
 
-        if (selection is null)
-            return new NetworkSnapshot(NetworkKind.Offline, string.Empty, string.Empty);
+        if (!summary.Online)
+            return new NetworkSnapshot(NetworkKind.Offline, string.Empty, string.Empty, string.Empty);
 
-        var adapter = selection.Adapter;
-        var ipv4 = selection.IPv4;
-
-        // Display name is derived from the medium (NetworkInterfaceType), never
-        // from the raw adapter name: a vEthernet External Switch reports as
-        // Ethernet, so it shows "Ethernet" (or the Wi-Fi SSID) rather than the
-        // "vEthernet (…)" adapter name.
-        if (adapter.Type == NetworkInterfaceType.Wireless80211)
+        var kind = summary.Kind switch
         {
-            // Try to get the SSID via the native WlanAPI. Falls back to the
-            // adapter name when the Wi-Fi subsystem is unavailable.
-            var ssid = TryGetWifiSsidNative(adapter.Id) ?? adapter.Name;
-            return new NetworkSnapshot(NetworkKind.WiFi, ssid, ipv4);
-        }
+            NetworkAdapterSelector.ConnectionKind.WiFi => NetworkKind.WiFi,
+            NetworkAdapterSelector.ConnectionKind.Vpn  => NetworkKind.Vpn,
+            _                                          => NetworkKind.Ethernet,
+        };
 
-        return new NetworkSnapshot(NetworkKind.Ethernet, "Ethernet", ipv4);
+        return new NetworkSnapshot(kind, summary.Label, summary.IPv4, summary.Tooltip);
     }
 
-    /// <summary>
-    /// Reads the current SSID for the given NIC adapter GUID via the native
-    /// <c>wlanapi.dll</c> WlanQueryInterface call. Returns <c>null</c> when the
-    /// interface is not connected or the API is unavailable.
-    /// </summary>
-    private static string? TryGetWifiSsidNative(string nicId)
-    {
-        try
-        {
-            if (!Guid.TryParse(nicId, out var guid)) return null;
+    public enum NetworkKind { Offline, Ethernet, WiFi, Vpn }
 
-            if (WlanOpenHandle(2, IntPtr.Zero, out _, out var client) != 0) return null;
-            try
-            {
-                const uint OpcodeCurrentConnection = 7; // wlan_intf_opcode_current_connection
-                if (WlanQueryInterface(client, ref guid, OpcodeCurrentConnection,
-                        IntPtr.Zero, out _, out var dataPtr, out _) != 0)
-                    return null;
-                try
-                {
-                    // WLAN_CONNECTION_ATTRIBUTES layout (byte offsets):
-                    //   isState            : [0]   4 bytes
-                    //   wlanConnectionMode : [4]   4 bytes
-                    //   strProfileName     : [8]   512 bytes  (256 WCHARs)
-                    //   dot11Ssid.uSSIDLength: [520] 4 bytes
-                    //   dot11Ssid.ucSSID   : [524] 32 bytes
-                    const int SsidLengthOffset = 520;
-                    const int SsidBytesOffset  = 524;
-                    const int MaxSsidLength    = 32;
-
-                    var length = Marshal.ReadInt32(dataPtr, SsidLengthOffset);
-                    if (length <= 0 || length > MaxSsidLength) return null;
-
-                    var ssidBytes = new byte[length];
-                    Marshal.Copy(dataPtr + SsidBytesOffset, ssidBytes, 0, length);
-                    return Encoding.UTF8.GetString(ssidBytes);
-                }
-                finally
-                {
-                    WlanFreeMemory(dataPtr);
-                }
-            }
-            finally
-            {
-                WlanCloseHandle(client, IntPtr.Zero);
-            }
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    #region WlanAPI P/Invoke
-    [DllImport("wlanapi.dll", SetLastError = false)]
-    private static extern uint WlanOpenHandle(uint dwClientVersion, IntPtr pReserved,
-        out uint pdwNegotiatedVersion, out IntPtr phClientHandle);
-
-    [DllImport("wlanapi.dll", SetLastError = false)]
-    private static extern uint WlanCloseHandle(IntPtr hClientHandle, IntPtr pReserved);
-
-    [DllImport("wlanapi.dll", SetLastError = false)]
-    private static extern void WlanFreeMemory(IntPtr pMemory);
-
-    [DllImport("wlanapi.dll", SetLastError = false)]
-    private static extern uint WlanQueryInterface(IntPtr hClientHandle, ref Guid pInterfaceGuid,
-        uint dwOpCode, IntPtr pReserved, out uint pdwDataSize, out IntPtr ppData,
-        out uint pWlanOpcodeValueType);
-    #endregion
-
-    public enum NetworkKind { Offline, Ethernet, WiFi }
-
-    public sealed record NetworkSnapshot(NetworkKind Kind, string DisplayName, string IPv4);
+    public sealed record NetworkSnapshot(NetworkKind Kind, string DisplayName, string IPv4, string Tooltip = "");
 }

@@ -239,11 +239,11 @@ mailto:it@example.com?subject=Support - {{ComputerName}}&body=Device: {{Computer
 ### 3e. Deploying custom language files
 
 TrayLight loads its UI translations from plain JSON files in
-`C:\Program Files\TrayLight\Languages\`. English (`en.json`), German (`de.json`)
-and French (`fr.json`) ship with the MSI. To add another language — or override
-the built-in wording — deploy an extra JSON file into that folder. **No app
-rebuild and no reinstall are required**; the file is picked up on the next
-restart of TrayLight.
+`C:\Program Files\TrayLight\Languages\`. English (`en.json`), German (`de.json`),
+French (`fr.json`) and Dutch (`nl.json`) ship with the MSI. To add another
+language — or override the built-in wording — deploy an extra JSON file into that
+folder. **No app rebuild and no reinstall are required**; the file is picked up
+on the next restart of TrayLight.
 
 The service always loads `en.json` as the base and overlays the file that
 matches the Windows display language (exact culture like `de-AT.json` first,
@@ -254,10 +254,10 @@ complete reference key list.
 **Recommended: Intune Win32 app.** Package the language file(s) as a `.intunewin`
 and deploy them to the same devices that receive TrayLight.
 
-1. Put your language file (e.g. `nl.json`) in a source folder and wrap it:
+1. Put your language file (e.g. `it.json`) in a source folder and wrap it:
 
    ```pwsh
-   IntuneWinAppUtil.exe -c .\src -s nl.json -o .\out
+   IntuneWinAppUtil.exe -c .\src -s it.json -o .\out
    ```
 
 2. Create a **Win32 app** in Intune with these settings:
@@ -265,18 +265,18 @@ and deploy them to the same devices that receive TrayLight.
    - **Install command:**
 
      ```pwsh
-     powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Copy-Item -Path '.\nl.json' -Destination 'C:\Program Files\TrayLight\Languages\nl.json' -Force"
+     powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Copy-Item -Path '.\it.json' -Destination 'C:\Program Files\TrayLight\Languages\it.json' -Force"
      ```
 
    - **Uninstall command:**
 
      ```pwsh
-     powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item -Path 'C:\Program Files\TrayLight\Languages\nl.json' -Force -ErrorAction SilentlyContinue"
+     powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item -Path 'C:\Program Files\TrayLight\Languages\it.json' -Force -ErrorAction SilentlyContinue"
      ```
 
    - **Install behavior:** System
    - **Detection rule:** File exists —
-     `C:\Program Files\TrayLight\Languages\nl.json`
+     `C:\Program Files\TrayLight\Languages\it.json`
 
 3. Set TrayLight as a **dependency** (or deploy to the same group) so the
    `Languages` folder already exists when the language file lands.

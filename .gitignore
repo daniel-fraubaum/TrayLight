@@ -19,3 +19,6 @@ intune-sync-diag.txt
 packages/
 TestResults/
 *.msi
+
+# Local build/test artifacts
+TrayLight-*.zip

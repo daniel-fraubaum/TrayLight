@@ -211,6 +211,12 @@ public sealed class SystemInfoDumpService : ISystemInfoDumpService
             sb.AppendLine($"    Type:    {nic.NetworkInterfaceType}");
             sb.AppendLine($"    MAC:     {mac}");
             sb.AppendLine($"    IP(s):   {string.Join(", ", ips)}");
+            if (nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+            {
+                var ssid = NetworkAdapterSelector.TryGetWifiSsid(nic.Id);
+                if (!string.IsNullOrEmpty(ssid))
+                    sb.AppendLine($"    SSID:    {ssid}");
+            }
             any = true;
         }
 

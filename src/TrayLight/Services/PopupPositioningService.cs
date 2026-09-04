@@ -15,11 +15,21 @@ public class PopupPositioningService : IPopupPositioningService
 
     public void PositionAboveTray(Window window)
     {
-        var workArea = GetCursorMonitorWorkArea(window) ?? SystemParameters.WorkArea;
+        var workArea = GetWorkArea(window);
 
-        window.Left = workArea.Right  - window.Width  - Margin;
-        window.Top  = workArea.Bottom - window.Height - Margin;
+        // SizeToContent leaves Height as NaN until the first layout pass, so
+        // prefer the measured ActualHeight; the window re-anchors itself on
+        // SizeChanged once content is laid out.
+        var height = window.ActualHeight > 0 ? window.ActualHeight : window.Height;
+        if (double.IsNaN(height)) height = 0;
+
+        window.Left = workArea.Right  - window.Width - Margin;
+        window.Top  = workArea.Bottom - height - Margin;
     }
+
+    /// <inheritdoc />
+    public Rect GetWorkArea(Window window) =>
+        GetCursorMonitorWorkArea(window) ?? SystemParameters.WorkArea;
 
     private static Rect? GetCursorMonitorWorkArea(Window window)
     {

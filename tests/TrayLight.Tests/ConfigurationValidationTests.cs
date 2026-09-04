@@ -53,11 +53,26 @@ public class ConfigurationValidationTests
     public void Validate_InfoItemPositionOutOfRange_ReportsError()
     {
         var config = AppConfiguration.CreateDefault();
-        config.InfoItems.Add(new InfoItemConfig { Type = InfoItemType.ComputerName, Position = 6 });
+        config.InfoItems.Add(new InfoItemConfig { Type = InfoItemType.ComputerName, Position = 8 });
 
         var errors = ConfigurationService.Validate(config);
 
         Assert.Contains(errors, e => e.Contains("position", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(6)]
+    [InlineData(7)]
+    public void Validate_InfoItemPositionInRange_NoError(int position)
+    {
+        var config = AppConfiguration.CreateDefault();
+        config.InfoItems.Add(new InfoItemConfig { Type = InfoItemType.ComputerName, Position = position });
+
+        var errors = ConfigurationService.Validate(config);
+
+        Assert.DoesNotContain(errors, e => e.Contains("position", StringComparison.Ordinal));
     }
 
     [Fact]

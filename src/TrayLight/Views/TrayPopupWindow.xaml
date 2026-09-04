@@ -9,7 +9,7 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:TrayPopupViewModel}"
         Title="TrayLight"
-        Width="380"
+        Width="420"
         SizeToContent="Height"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -109,30 +109,42 @@
                     Margin="0,12,0,16" />
 
             <!-- ===================== 2. INFO ITEMS GRID ====================
-                 2-column layout. ScrollViewer caps the height when more
-                 than 6 tiles are configured so the popup never grows past
-                 the screen height. -->
-            <ScrollViewer Grid.Row="2"
-                          MaxHeight="360"
+                 Compact 2-column layout. Tiles are grouped into rows of two so
+                 each row sizes to its own content: a row whose title wraps (long
+                 German/Dutch strings) grows, the others stay single-line. The
+                 window is SizeToContent=Height; TileScroll.MaxHeight is set at
+                 runtime to the usable work area (see OnSizeChanged), so the
+                 ScrollViewer only scrolls as a last-resort safety net. -->
+            <ScrollViewer x:Name="TileScroll"
+                          Grid.Row="2"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled">
-                <ItemsControl ItemsSource="{Binding InfoItems}">
+                <ItemsControl ItemsSource="{Binding InfoItemRows}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <UniformGrid Columns="2" />
+                            <StackPanel />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <v:InfoItemControl AccentBrush="{Binding DataContext.AccentBrush,
-                                                              RelativeSource={RelativeSource AncestorType=Window}}" />
+                            <!-- One grid row: up to two tiles that share this
+                                 row's height (Rows=1), independent of other rows. -->
+                            <ItemsControl ItemsSource="{Binding}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="2" Rows="1" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <v:InfoItemControl Margin="0,0,8,8"
+                                                           AccentBrush="{Binding DataContext.AccentBrush,
+                                                                          RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
-                    <ItemsControl.ItemContainerStyle>
-                        <Style TargetType="ContentPresenter">
-                            <Setter Property="Margin" Value="0,0,8,8" />
-                        </Style>
-                    </ItemsControl.ItemContainerStyle>
                 </ItemsControl>
             </ScrollViewer>
 

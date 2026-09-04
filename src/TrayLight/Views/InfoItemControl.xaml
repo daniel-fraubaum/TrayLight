@@ -43,7 +43,12 @@
             </Grid>
 
             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                <TextBlock Text="{Binding Title}" Style="{StaticResource LabelTextStyle}" />
+                <!-- Single line by default; a long localized title (e.g. Dutch
+                     "Besturingssysteem") wraps and only that tile row grows. -->
+                <TextBlock Text="{Binding Title}"
+                           Style="{StaticResource LabelTextStyle}"
+                           TextWrapping="Wrap"
+                           ToolTip="{Binding Title}" />
                 <TextBlock Text="{Binding Value}"
                            Style="{StaticResource BodyTextStyle}"
                            FontSize="12"

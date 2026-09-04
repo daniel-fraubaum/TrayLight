@@ -18,12 +18,15 @@
                            Style="{StaticResource IconGlyphStyle}"
                            FontSize="16" />
             </Grid>
+            <!-- Single line by default; wraps to a second line only for long
+                 localized labels (that shortcut row then grows), ellipsized beyond. -->
             <TextBlock Text="{Binding Title}"
                        Style="{StaticResource BodyTextStyle}"
                        FontSize="11"
                        FontWeight="SemiBold"
                        HorizontalAlignment="Center"
                        TextAlignment="Center"
+                       TextWrapping="Wrap"
                        TextTrimming="CharacterEllipsis"
                        Margin="0,6,0,0" />
         </StackPanel>

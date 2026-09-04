@@ -180,7 +180,6 @@ public partial class App : Application
         services.AddSingleton<IInfoItemProvider, LastRebootProvider>();
         services.AddSingleton<IInfoItemProvider, StorageUsedProvider>();
         services.AddSingleton<IInfoItemProvider, NetworkInfoProvider>();
-        services.AddSingleton<IInfoItemProvider, EntraIdStatusProvider>();
         services.AddSingleton<IInfoItemProvider, IntuneSyncProvider>();
 
         // App-level periodic refresh (timer rooted by this singleton).

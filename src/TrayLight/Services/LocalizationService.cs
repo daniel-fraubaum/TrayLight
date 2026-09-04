@@ -41,7 +41,7 @@ public sealed class LocalizationService
 
     /// <summary>Languages that ship with the installer.</summary>
     public static readonly IReadOnlyList<string> SupportedLanguages =
-        new[] { "en", "de", "fr" };
+        new[] { "en", "de", "fr", "nl" };
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

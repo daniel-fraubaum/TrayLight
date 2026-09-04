@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text.Json;
 using TrayLight.Resources;
 using TrayLight.Services;
 using TrayLight.ViewModels;
@@ -77,6 +79,18 @@ public class LocalizationTests
     }
 
     [Fact]
+    public void Dutch_resources_are_used_for_nl()
+    {
+        WithUiCulture("nl-NL", () =>
+        {
+            Assert.Equal("Computernaam", Strings.TileComputerName);
+            Assert.Equal("Snelle acties", Strings.QuickActions);
+            Assert.Equal("Niet geregistreerd", Strings.StatusNotEnrolled);
+            Assert.Equal("Afsluiten", Strings.MenuQuit);
+        });
+    }
+
+    [Fact]
     public void Regional_culture_falls_back_to_base_language()
     {
         // de-AT has no dedicated resource — it must resolve to the de resources.
@@ -86,6 +100,10 @@ public class LocalizationTests
         // fr-CA falls back to the fr resources.
         WithUiCulture("fr-CA", () =>
             Assert.Equal("Reseau", Strings.TileNetwork));
+
+        // nl-BE (Flemish) falls back to the nl resources.
+        WithUiCulture("nl-BE", () =>
+            Assert.Equal("Netwerk", Strings.TileNetwork));
     }
 
     [Fact]
@@ -104,6 +122,8 @@ public class LocalizationTests
     [InlineData("de-AT", "de")]
     [InlineData("fr-FR", "fr")]
     [InlineData("fr-CA", "fr")]
+    [InlineData("nl-NL", "nl")]
+    [InlineData("nl-BE", "nl")]
     [InlineData("en-US", "en")]
     [InlineData("es-ES", "en")]
     [InlineData("ja-JP", "en")]
@@ -248,5 +268,89 @@ public class LocalizationTests
         {
             Directory.Delete(dir, recursive: true);
         }
+    }
+
+    // ---- Tile tooltips are localized (issue #18) --------------------------
+
+    [Fact]
+    public void Tile_tooltips_come_from_the_localization_service()
+    {
+        WithUiCulture("en-US", () =>
+        {
+            Assert.Equal("(click to copy)", Strings.TooltipClickToCopy);
+            Assert.Equal("Click to sync now.", Strings.TooltipClickToSyncNow);
+            Assert.Equal("Last Intune sync: 01.01.2026 08:00",
+                Strings.Format("Tooltip_LastIntuneSync", "01.01.2026 08:00"));
+        });
+
+        WithUiCulture("de-DE", () =>
+        {
+            Assert.Equal("(zum Kopieren klicken)", Strings.TooltipClickToCopy);
+            Assert.Equal("Zum Synchronisieren klicken.", Strings.TooltipClickToSyncNow);
+            Assert.Equal("Letzter Intune Sync: 01.01.2026 08:00",
+                Strings.Format("Tooltip_LastIntuneSync", "01.01.2026 08:00"));
+        });
+
+        WithUiCulture("fr-FR", () =>
+        {
+            Assert.Equal("(cliquer pour copier)", Strings.TooltipClickToCopy);
+            Assert.Equal("Cliquer pour synchroniser.", Strings.TooltipClickToSyncNow);
+            Assert.Equal("Derniere synchro Intune : 01.01.2026 08:00",
+                Strings.Format("Tooltip_LastIntuneSync", "01.01.2026 08:00"));
+        });
+
+        WithUiCulture("nl-NL", () =>
+        {
+            Assert.Equal("(klik om te kopiëren)", Strings.TooltipClickToCopy);
+            Assert.Equal("Klik om nu te synchroniseren.", Strings.TooltipClickToSyncNow);
+            Assert.Equal("Laatste Intune-synchronisatie: 01.01.2026 08:00",
+                Strings.Format("Tooltip_LastIntuneSync", "01.01.2026 08:00"));
+        });
+    }
+
+    [Fact]
+    public void OsDetail_does_not_duplicate_the_edition()
+    {
+        // ProductName already contains "Enterprise" - it must not be appended again.
+        var detail = TrayPopupViewModel.ComposeOsDetail(
+            "Windows 11 Enterprise", "Enterprise", "25H2", "Build 26200.8655");
+
+        Assert.Equal("Windows 11 Enterprise 25H2 (Build 26200.8655)", detail);
+        Assert.DoesNotContain("Enterprise Enterprise", detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void OsDetail_appends_edition_when_product_name_omits_it()
+    {
+        // Older ProductName values ("Windows 10 Pro") already include the edition,
+        // but when they don't, the EditionID is appended once.
+        var detail = TrayPopupViewModel.ComposeOsDetail(
+            "Windows 11", "Enterprise", "25H2", "Build 26200.8655");
+
+        Assert.Equal("Windows 11 Enterprise 25H2 (Build 26200.8655)", detail);
+    }
+
+    [Theory]
+    [InlineData("de")]
+    [InlineData("fr")]
+    [InlineData("nl")]
+    public void Every_shipped_language_defines_every_english_key(string language)
+    {
+        // A shipped language must define every key en.json has, otherwise the
+        // corresponding tile/tooltip silently falls back to English.
+        var dir = Path.Combine(AppContext.BaseDirectory, LocalizationService.LanguagesFolderName);
+        var english = LoadKeys(Path.Combine(dir, "en.json"));
+        var translated = LoadKeys(Path.Combine(dir, $"{language}.json"));
+
+        var missing = english.Except(translated).OrderBy(k => k, StringComparer.Ordinal).ToList();
+        Assert.True(missing.Count == 0, $"{language}.json is missing keys: " + string.Join(", ", missing));
+    }
+
+    private static HashSet<string> LoadKeys(string path)
+    {
+        using var doc = JsonDocument.Parse(File.ReadAllText(path));
+        return doc.RootElement.EnumerateObject()
+            .Select(p => p.Name)
+            .ToHashSet(StringComparer.Ordinal);
     }
 }

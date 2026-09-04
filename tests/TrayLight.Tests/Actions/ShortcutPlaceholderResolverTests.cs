@@ -1,4 +1,6 @@
+using System.Globalization;
 using TrayLight.Models;
+using TrayLight.Services;
 using TrayLight.Services.Actions;
 using TrayLight.Services.Providers;
 using Xunit;
@@ -51,9 +53,23 @@ public class ShortcutPlaceholderResolverTests
         var result = await resolver.ExpandAsync(input);
 
         Assert.Equal(
-            "app:DESK-01|Win 11 Ent 25H2|4h 11m ago|66% used|Ethernet 192.168.199.52|" +
+            "app:DESK-01|Win 11 Ent 25H2|4h 11m ago|66% used|Ethernet - 192.168.199.52|" +
             "jdoe|CONTOSO|SN-12345|13m ago",
             result);
+    }
+
+    [Fact]
+    public async Task Network_placeholder_includes_wifi_ssid()
+    {
+        // The Network provider already resolves the SSID into its Value on WiFi;
+        // the placeholder joins it with the IP as "WiFi {SSID} - {IP}".
+        var resolver = new ShortcutPlaceholderResolver(new IInfoItemProvider[]
+        {
+            new FakeProvider(NetworkInfoProvider.TypeKey, "WiFi CorpNet", "10.0.0.4"),
+        });
+
+        Assert.Equal("WiFi CorpNet - 10.0.0.4",
+            await resolver.ExpandAsync("{{Network}}"));
     }
 
     [Fact]
@@ -132,5 +148,84 @@ public class ShortcutPlaceholderResolverTests
 
         Assert.True(result.Success);
         Assert.Equal("tool.exe --host DESK-01", handler.SeenAction);
+    }
+
+    // ---- Placeholder / tile parity (issue: {{LastReboot}} == tile) --------
+
+    private static void WithCulture(string culture, Action body)
+    {
+        var origUi = CultureInfo.CurrentUICulture;
+        var orig = CultureInfo.CurrentCulture;
+        try
+        {
+            var ci = CultureInfo.GetCultureInfo(culture);
+            CultureInfo.CurrentUICulture = ci;
+            CultureInfo.CurrentCulture = ci;
+            body();
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = origUi;
+            CultureInfo.CurrentCulture = orig;
+        }
+    }
+
+    [Theory]
+    [InlineData("en-US")]
+    [InlineData("nl-NL")]
+    public void LastReboot_placeholder_equals_the_tile_display(string culture)
+    {
+        WithCulture(culture, () =>
+        {
+            var uptime = TimeSpan.FromHours(2) + TimeSpan.FromMinutes(9);
+            var provider = new LastRebootProvider(() => uptime, (_, _) => { }, () => 0);
+            provider.Configure(new InfoItemConfig());
+
+            // The tile and the provider both format through RelativeTimeFormatter,
+            // so the provider value must equal the tile's display string.
+            var tileValue = RelativeTimeFormatter.FormatUptime(uptime);
+            var providerValue = provider.GetDataAsync().GetAwaiter().GetResult().Value;
+            Assert.Equal(tileValue, providerValue);
+
+            var resolver = new ShortcutPlaceholderResolver(new IInfoItemProvider[] { provider });
+            var expanded = resolver.ExpandAsync("body:{{LastReboot}}").GetAwaiter().GetResult();
+
+            Assert.Equal($"body:{tileValue}", expanded);
+            Assert.DoesNotContain("Today", expanded, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
+    public void LastReboot_placeholder_is_localized_to_dutch()
+    {
+        WithCulture("nl-NL", () =>
+        {
+            var uptime = TimeSpan.FromHours(2) + TimeSpan.FromMinutes(9);
+            var provider = new LastRebootProvider(() => uptime, (_, _) => { }, () => 0);
+            provider.Configure(new InfoItemConfig());
+            var resolver = new ShortcutPlaceholderResolver(new IInfoItemProvider[] { provider });
+
+            Assert.Equal("body:2u 9m geleden",
+                resolver.ExpandAsync("body:{{LastReboot}}").GetAwaiter().GetResult());
+        });
+    }
+
+    [Fact]
+    public async Task Provider_backed_placeholders_return_the_provider_value_verbatim()
+    {
+        // Proves the resolver reads shared provider data and never re-formats it
+        // through a separate function.
+        var resolver = new ShortcutPlaceholderResolver(new IInfoItemProvider[]
+        {
+            new FakeProvider(ComputerNameProvider.TypeKey, "SENTINEL-PC"),
+            new FakeProvider(OsVersionProvider.TypeKey,    "SENTINEL-OS"),
+            new FakeProvider(LastRebootProvider.TypeKey,   "SENTINEL-REBOOT"),
+            new FakeProvider(StorageUsedProvider.TypeKey,  "SENTINEL-STORAGE"),
+        });
+
+        var result = await resolver.ExpandAsync(
+            "{{ComputerName}}|{{OsVersion}}|{{LastReboot}}|{{Storage}}");
+
+        Assert.Equal("SENTINEL-PC|SENTINEL-OS|SENTINEL-REBOOT|SENTINEL-STORAGE", result);
     }
 }

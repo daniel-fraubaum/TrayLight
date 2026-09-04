@@ -155,8 +155,8 @@ public class ConfigurationService : IConfigurationService
             var item = config.InfoItems[i];
             if (item.Type == InfoItemType.Unknown)
                 errors.Add($"infoItems[{i}].type is missing or unknown.");
-            if (item.Position < -1 || item.Position > 5)
-                errors.Add($"infoItems[{i}].position must be -1 or in range 0..5 (was {item.Position}).");
+            if (item.Position < -1 || item.Position > 7)
+                errors.Add($"infoItems[{i}].position must be -1 or in range 0..7 (was {item.Position}).");
             if (item.StorageLimit is < 0 or > 100)
                 errors.Add($"infoItems[{i}].storageLimit must be in range 0..100 (was {item.StorageLimit}).");
             if (item.UptimeDaysLimit is < 0)

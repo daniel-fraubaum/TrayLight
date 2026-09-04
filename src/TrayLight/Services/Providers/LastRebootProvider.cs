@@ -42,19 +42,9 @@ public sealed class LastRebootProvider : InfoItemProviderBase
         var uptime = _uptimeProvider();
         var bootTime = DateTime.Now - uptime;
 
-        string display;
-        if (uptime < TimeSpan.FromHours(24))
-        {
-            display = "Today";
-        }
-        else
-        {
-            var days = (int)uptime.TotalDays;
-            var hours = uptime.Hours;
-            display = hours > 0
-                ? $"{days} d, {hours} h ago"
-                : $"{days} d ago";
-        }
+        // Same localized relative-duration string the tile shows (e.g.
+        // "2h 9m ago" / "2u 9m geleden"), so {{LastReboot}} matches the tile.
+        var display = RelativeTimeFormatter.FormatUptime(uptime);
 
         var limit = _warningDaysProvider();
         var hasWarning = limit > 0 && uptime.TotalDays >= limit;

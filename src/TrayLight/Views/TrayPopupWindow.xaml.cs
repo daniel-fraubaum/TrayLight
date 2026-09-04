@@ -10,18 +10,29 @@ namespace TrayLight.Views;
 public partial class TrayPopupWindow : Window
 {
     private readonly IThemeService _themeService;
+    private readonly IPopupPositioningService _positioning;
+
+    // Transparent margin around RootBorder (drop shadow) + gap to the taskbar.
+    private const double EdgeMargin = 12;
 
     private static readonly Uri LightThemeUri = new("/Themes/Light.xaml", UriKind.Relative);
     private static readonly Uri DarkThemeUri  = new("/Themes/Dark.xaml",  UriKind.Relative);
 
-    public TrayPopupWindow(TrayPopupViewModel viewModel, IThemeService themeService)
+    public TrayPopupWindow(TrayPopupViewModel viewModel, IThemeService themeService,
+        IPopupPositioningService positioning)
     {
         InitializeComponent();
         DataContext = viewModel;
         _themeService = themeService;
+        _positioning = positioning;
 
         ApplyTheme();
         _themeService.ThemeChanged += OnThemeChanged;
+
+        // Re-anchor and apply the safety-net tile height whenever the content
+        // resizes the window (SizeToContent=Height), so the popup grows upward
+        // from a fixed bottom edge above the taskbar.
+        SizeChanged += OnSizeChanged;
 
         // The window itself is cached by TrayIconViewModel (created once,
         // shown/hidden repeatedly). Recompute live tile data and reset the
@@ -31,6 +42,27 @@ public partial class TrayPopupWindow : Window
             if (e.NewValue is true && DataContext is TrayPopupViewModel vm)
                 vm.Refresh();
         };
+    }
+
+    private void OnSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var workArea = _positioning.GetWorkArea(this);
+
+        // Height of everything except the scrollable tile area (header, accent,
+        // quick actions, info text, footer). Independent of the tile count.
+        var chrome = ActualHeight - TileScroll.ActualHeight;
+        var availableForTiles = workArea.Height - (EdgeMargin * 2) - chrome;
+
+        // Only cap the tile area at the usable screen height. While the content
+        // fits, this cap is larger than the tiles so the ScrollViewer sizes to
+        // content and never scrolls - the window just grows taller.
+        if (availableForTiles > 0 && Math.Abs(TileScroll.MaxHeight - availableForTiles) > 0.5)
+            TileScroll.MaxHeight = availableForTiles;
+
+        // Bottom-anchored above the taskbar: the bottom edge stays put and the
+        // top edge moves up as the window gets taller.
+        Left = workArea.Right  - ActualWidth  - EdgeMargin;
+        Top  = workArea.Bottom - ActualHeight - EdgeMargin;
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)

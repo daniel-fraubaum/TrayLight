@@ -64,6 +64,9 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool   _showAttribution = true;
 
     public ObservableCollection<InfoItemViewModel> InfoItems { get; } = new();
+    // Tiles grouped into rows of two so each grid row sizes independently: a
+    // row with a wrapped (long-language) title grows, the others stay compact.
+    public ObservableCollection<IReadOnlyList<InfoItemViewModel>> InfoItemRows { get; } = new();
     public ObservableCollection<ShortcutViewModel> Shortcuts { get; } = new();
     public ObservableCollection<InfoTextLine>      InfoTextLines { get; } = new();
 
@@ -88,22 +91,8 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
     /// &lt;24h =&gt; "Xh Ym ago", otherwise "X days ago".
     /// Negative or absurdly large values collapse to "unknown".
     /// </summary>
-    internal static string FormatRelative(TimeSpan elapsed)
-    {
-        if (elapsed < TimeSpan.Zero || elapsed.TotalDays > 3650) return Strings.RelativeUnknown;
-        if (elapsed.TotalMinutes < 1) return Strings.RelativeJustNow;
-        if (elapsed.TotalMinutes < 60)
-        {
-            var m = (int)elapsed.TotalMinutes;
-            return Strings.Format(m == 1 ? "RelativeMinuteAgoFormat" : "RelativeMinutesAgoFormat", m);
-        }
-        if (elapsed.TotalHours < 24)
-        {
-            return Strings.Format("RelativeHoursMinutesAgoFormat", elapsed.Hours, elapsed.Minutes);
-        }
-        var d = (int)elapsed.TotalDays;
-        return Strings.Format(d == 1 ? "RelativeDayAgoFormat" : "RelativeDaysAgoFormat", d);
-    }
+    internal static string FormatRelative(TimeSpan elapsed) =>
+        TrayLight.Services.RelativeTimeFormatter.FormatRelative(elapsed);
 
     public TrayPopupViewModel(
         IConfigurationService configService,
@@ -230,7 +219,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         InfoItems.Clear();
 
         // Take only enabled items with a valid grid slot, ordered by position.
-        // Up to 8 tiles (4 rows × 2 columns), matching the ADMX Position range 0..7.
+        // Up to 8 tiles (2-column grid), matching the ADMX Position range 0..7.
         var ordered = config.InfoItems
             .Where(i => i.Enabled && i.Position is >= 0 and <= 7)
             .OrderBy(i => i.Position)
@@ -240,6 +229,11 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         {
             InfoItems.Add(BuildInfoItem(item));
         }
+
+        // Group into rows of two for the per-row-height grid layout.
+        InfoItemRows.Clear();
+        for (int i = 0; i < InfoItems.Count; i += 2)
+            InfoItemRows.Add(InfoItems.Skip(i).Take(2).ToList());
     }
 
     private InfoItemViewModel BuildInfoItem(InfoItemConfig cfg)
@@ -261,7 +255,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         {
             case InfoItemType.ComputerName:
                 vm.Value = _systemInfo.MachineName;
-                vm.ValueTooltip = $"{_systemInfo.MachineName} (click to copy)";
+                vm.ValueTooltip = $"{_systemInfo.MachineName} {Strings.TooltipClickToCopy}";
                 vm.ClickCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(
                     () => CopyToClipboard(_systemInfo.MachineName));
                 break;
@@ -269,7 +263,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
             case InfoItemType.OsVersion:
                 var (osDisplay, osDetail) = GetOsVersionDisplay(_systemInfo.OsVersion);
                 vm.Value = osDisplay;
-                vm.ValueTooltip = $"{osDetail} (click to copy)";
+                vm.ValueTooltip = $"{osDetail} {Strings.TooltipClickToCopy}";
                 vm.ClickCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(
                     () => CopyToClipboard(osDetail));
                 // OS version is informational - never a warning.
@@ -304,16 +298,10 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
                 // Network state is informational - offline is shown but never warns.
                 break;
 
-            case InfoItemType.EntraIdStatus:
-                vm.Value = Strings.StatusDetecting;
-                vm.ValueTooltip = string.Empty;
-                _ = LoadEntraIdAsync(vm);
-                break;
-
             case InfoItemType.SerialNumber:
                 var serial = ReadSerialNumber();
                 vm.Value = serial;
-                vm.ValueTooltip = $"{serial} (click to copy)";
+                vm.ValueTooltip = $"{serial} {Strings.TooltipClickToCopy}";
                 vm.ClickCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(
                     () => CopyToClipboard(serial));
                 break;
@@ -330,14 +318,8 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         return vm;
     }
 
-    private static string FormatUptime(TimeSpan uptime)
-    {
-        if (uptime.TotalDays >= 2)  return Strings.Format("UptimeDaysHoursAgoFormat", (int)uptime.TotalDays, uptime.Hours);
-        if (uptime.TotalDays >= 1)  return Strings.Format("UptimeOneDayHoursAgoFormat", uptime.Hours);
-        if (uptime.TotalHours >= 1) return Strings.Format("UptimeHoursMinutesAgoFormat", uptime.Hours, uptime.Minutes);
-        if (uptime.TotalMinutes >= 1) return Strings.Format("UptimeMinutesAgoFormat", (int)uptime.TotalMinutes);
-        return Strings.RelativeJustNow;
-    }
+    private static string FormatUptime(TimeSpan uptime) =>
+        TrayLight.Services.RelativeTimeFormatter.FormatUptime(uptime);
 
     private static void CopyToClipboard(string text)
     {
@@ -418,7 +400,7 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         if (!enrolled && lastSync is null)
         {
             vm.Value = Strings.StatusNotEnrolled;
-            vm.ValueTooltip = "Device is not Intune managed.";
+            vm.ValueTooltip = Strings.TooltipNotIntuneManaged;
             vm.HasWarning = false;
             // No sync to trigger - make the tile non-interactive.
             vm.IsClickable = false;
@@ -431,8 +413,8 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
             // Enrolled but no readable timestamp (no PushLaunch task yet,
             // no IME logs, etc.). Don't lie with "just now".
             vm.Value = Strings.StatusUnknown;
-            vm.ValueTooltip = "Device is Intune managed but the last sync time "
-                + "could not be determined.\nClick to sync now.";
+            vm.ValueTooltip = Strings.TooltipIntuneSyncTimeUnknown
+                + "\n" + Strings.TooltipClickToSyncNow;
             vm.HasWarning = false;
             vm.IsClickable = true;
             vm.ClickCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(
@@ -445,7 +427,11 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         // otherwise appear as "in the future" or "hours ago" on every popup.
         var age = DateTime.Now - lastSync.Value;
         vm.Value = FormatRelative(age);
-        vm.ValueTooltip = $"Last Intune sync: {lastSync:dd.MM.yyyy HH:mm} ({source})\nClick to sync now.";
+        // The technical sync source ({source}) is logged above, not shown to the
+        // user - the tooltip stays clean and fully localized.
+        vm.ValueTooltip = Strings.Format("Tooltip_LastIntuneSync",
+                lastSync.Value.ToString("dd.MM.yyyy HH:mm"))
+            + "\n" + Strings.TooltipClickToSyncNow;
         // Stale Intune sync is informational only - not a warning.
         vm.HasWarning = false;
         vm.IsClickable = true;
@@ -986,12 +972,29 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
             var display = $"Win {versionNumber} {EditionShort(edition)} {displayVersion}".Trim();
             display = System.Text.RegularExpressions.Regex.Replace(display, @"\s+", " ");
             var detail  = ubr is null ? $"Build {build}" : $"Build {build}.{ubr}";
-            return (display, $"{StripMicrosoft(product)} {edition} {displayVersion} ({detail})".Trim());
+
+            // ProductName often already carries the edition (e.g. "Windows 11
+            // Enterprise"); ComposeOsDetail avoids appending it twice.
+            return (display, ComposeOsDetail(product, edition, displayVersion, detail));
         }
         catch
         {
             return (StripMicrosoft(fallback), fallback);
         }
+    }
+
+    /// <summary>
+    /// Builds the long OS detail string, appending the EditionID only when the
+    /// product name doesn't already contain it (avoids "Enterprise Enterprise").
+    /// </summary>
+    internal static string ComposeOsDetail(string product, string edition, string displayVersion, string buildDetail)
+    {
+        var productName = StripMicrosoft(product);
+        var editionSuffix = !string.IsNullOrEmpty(edition) &&
+            productName.IndexOf(edition, StringComparison.OrdinalIgnoreCase) < 0
+            ? $" {edition}" : string.Empty;
+        var detailText = $"{productName}{editionSuffix} {displayVersion} ({buildDetail})".Trim();
+        return System.Text.RegularExpressions.Regex.Replace(detailText, @"\s+", " ");
     }
 
     private static string EditionShort(string edition) => edition switch
@@ -1013,49 +1016,20 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
     {
         try
         {
-            // Excludes virtual adapters (Hyper-V, VMware, …) and APIPA
-            // addresses, preferring the physical adapter that owns the default
-            // gateway - see NetworkAdapterSelector.
-            var selection = TrayLight.Services.Providers.NetworkAdapterSelector.SelectBest(
-                TrayLight.Services.Providers.NetworkAdapterSelector.EnumerateLiveAdapters());
+            // Route-based detection: shows the IP of the interface Windows would
+            // actually use to reach the internet (VPN IP on a full tunnel, the
+            // routed link on a split tunnel) and lists every active adapter in
+            // the tooltip - see NetworkAdapterSelector / NetworkDisplay.
+            var summary = TrayLight.Services.Providers.NetworkDisplay.Describe();
 
-            if (selection is null)
-                return (Strings.StatusOffline, string.Empty, "No active network connection.", false);
+            if (!summary.Online)
+                return (Strings.StatusOffline, string.Empty, Strings.TooltipNoNetworkConnection, false);
 
-            var ipv4 = selection.IPv4;
-            var name = selection.Adapter.Type ==
-                       System.Net.NetworkInformation.NetworkInterfaceType.Wireless80211
-                ? selection.Adapter.Name
-                : Strings.NetworkEthernet;
-
-            // The tooltip keeps the full IPv4 as a fallback in case the tile
-            // ever clips the value on very narrow layouts.
-            return (name, ipv4, $"{selection.Adapter.Description}\nIPv4: {ipv4}", true);
+            return (summary.Label, summary.IPv4, summary.Tooltip, true);
         }
         catch
         {
             return (Strings.StatusUnavailable, string.Empty, string.Empty, false);
-        }
-    }
-
-    private static async Task LoadEntraIdAsync(InfoItemViewModel vm)
-    {
-        try
-        {
-            // Read join state from the registry directly — no dsregcmd process.
-            var status = await Task.Run(
-                TrayLight.Services.Providers.EntraIdStatusProvider.ReadFromRegistry)
-                .ConfigureAwait(true);
-
-            vm.Value = status.StateDisplay;
-            vm.ValueTooltip = string.IsNullOrEmpty(status.TenantName)
-                ? status.StateDisplay
-                : $"{status.StateDisplay}\nTenant: {status.TenantName}";
-            // Identity tile is informational - never a warning.
-        }
-        catch
-        {
-            vm.Value = Strings.StatusUnavailable;
         }
     }
 
@@ -1130,7 +1104,6 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         InfoItemType.LastReboot       => "\uE823", // Clock
         InfoItemType.StorageUsed      => "\uEDA2", // Drive
         InfoItemType.NetworkInfo      => "\uE968", // Network
-        InfoItemType.EntraIdStatus    => "\uE77B", // Contact
         InfoItemType.SerialNumber     => "\uE7BF", // Tag
         InfoItemType.IntuneSync       => "\uE895", // Sync
         _                             => "\uE946", // Info
@@ -1143,7 +1116,6 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
         InfoItemType.LastReboot       => Strings.TileLastReboot,
         InfoItemType.StorageUsed      => Strings.TileStorage,
         InfoItemType.NetworkInfo      => Strings.TileNetwork,
-        InfoItemType.EntraIdStatus    => Strings.TileEntraId,
         InfoItemType.SerialNumber     => Strings.TileSerialNumber,
         InfoItemType.IntuneSync       => Strings.TileIntuneSync,
         _                             => Strings.TileInfo,

@@ -1,9 +1,10 @@
-using TrayLight.Models;
 using TrayLight.Services.Providers;
 using Xunit;
 
 namespace TrayLight.Tests.Providers;
 
+// Only the registry/dsregcmd parsing is covered here: it still backs the
+// About-dialog "[Entra ID / Workplace]" section. The Entra ID *tile* was removed.
 public class EntraIdStatusProviderTests
 {
     [Fact]
@@ -62,31 +63,5 @@ public class EntraIdStatusProviderTests
         var parsed = EntraIdStatusProvider.Parse(output);
 
         Assert.Equal("contoso.onmicrosoft.com", parsed.TenantName);
-    }
-
-    [Fact]
-    public async Task Provider_does_not_warn_when_not_joined()
-    {
-        var sut = new EntraIdStatusProvider(
-            () => new EntraIdStatusProvider.ParsedStatus(
-                EntraIdStatusProvider.JoinState.NotJoined, "Not Joined", null));
-        sut.Configure(new InfoItemConfig());
-
-        var data = await sut.GetDataAsync();
-
-        Assert.Equal("Not Joined", data.Value);
-        Assert.False(data.HasWarning);
-    }
-
-    [Fact]
-    public async Task Provider_swallows_runner_exception_and_returns_unavailable()
-    {
-        var sut = new EntraIdStatusProvider(
-            () => throw new InvalidOperationException("registry access denied"));
-        sut.Configure(new InfoItemConfig());
-
-        var data = await sut.GetDataAsync();
-
-        Assert.Equal("Not available", data.Value);
     }
 }
