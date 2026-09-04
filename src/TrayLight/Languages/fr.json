@@ -31,6 +31,7 @@
   "TileNetwork": "Reseau",
   "TileSerialNumber": "Numero de serie",
   "TileIntuneSync": "Synchro Intune",
+  "TileEntraId": "Entra ID",
   "TileInfo": "Info",
   "StatusNotEnrolled": "Non inscrit",
   "StatusUnknown": "Inconnu",
