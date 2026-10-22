@@ -32,10 +32,6 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
     private static readonly ImageSource? NormalIcon  = TryLoadIcon(NormalIconUri);
     private static readonly ImageSource? WarningIcon = TryLoadIcon(WarningIconUri);
 
-    /// <summary>Cache file for a tray icon downloaded from an ADMX URL.</summary>
-    private static string CachedTrayIconPath =>
-        Path.Combine(LogoService.CacheDirectory, "tray-icon.ico");
-
     private static readonly TimeSpan HttpTimeout = TimeSpan.FromSeconds(10);
 
     private readonly IServiceProvider _services;
@@ -46,11 +42,11 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
     private readonly ILogger<TrayIconViewModel> _log;
     private readonly HttpClient _http;
 
-    // Custom default-state icon resolved from Branding\TrayIcon (null = use
-    // the embedded app-normal.ico). The warning state always uses the embedded
-    // app-warning.ico.
-    private ImageSource? _customNormalIcon;
-    private string _currentTrayIconSource = string.Empty;
+    // Policy-supplied custom icons sharing one loader: Branding\TrayIcon
+    // replaces the embedded app-normal.ico, Branding\TrayIconWarning replaces
+    // app-warning.ico. A null Icon means "use the embedded default".
+    private readonly CustomIconSlot _normalSlot  = new("TrayIcon", "tray-icon.ico");
+    private readonly CustomIconSlot _warningSlot = new("TrayIconWarning", "tray-icon-warning.ico");
 
     private TrayPopupWindow? _popup;
 
@@ -75,9 +71,10 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
         _http = new HttpClient { Timeout = HttpTimeout };
         _http.DefaultRequestHeaders.UserAgent.ParseAdd("TrayLight/1.0");
 
-        // Resolve any policy-supplied custom icon before the first paint so the
+        // Resolve any policy-supplied custom icons before the first paint so the
         // tray shows the branded icon immediately when a local path is set.
-        ApplyTrayIconFromConfig(_config.Current.Branding.TrayIcon);
+        ApplyTrayIconFromConfig(_normalSlot, _config.Current.Branding.TrayIcon);
+        ApplyTrayIconFromConfig(_warningSlot, _config.Current.Branding.TrayIconWarning);
         _config.PropertyChanged += OnConfigChanged;
 
         ApplyBadgeState(_badges.Current);
@@ -110,9 +107,11 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
     {
         try
         {
-            // Warnings always use the embedded warning icon; the normal state
-            // uses the policy-supplied custom icon when one is available.
-            var target = state.HasWarnings ? WarningIcon : (_customNormalIcon ?? NormalIcon);
+            // Each state uses its policy-supplied custom icon when one is
+            // available, otherwise the embedded default.
+            var target = state.HasWarnings
+                ? (_warningSlot.Icon ?? WarningIcon)
+                : (_normalSlot.Icon ?? NormalIcon);
             if (target is not null)
                 IconSource = target;
         }
@@ -194,66 +193,76 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
     private void OnConfigChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(IConfigurationService.Current)) return;
-        var newSource = _config.Current.Branding.TrayIcon ?? string.Empty;
-        if (string.Equals(newSource, _currentTrayIconSource, StringComparison.OrdinalIgnoreCase))
+        var branding = _config.Current.Branding;
+        ApplyIfChanged(_normalSlot, branding.TrayIcon);
+        ApplyIfChanged(_warningSlot, branding.TrayIconWarning);
+    }
+
+    private void ApplyIfChanged(CustomIconSlot slot, string? source)
+    {
+        var newSource = source ?? string.Empty;
+        if (string.Equals(newSource, slot.Source, StringComparison.OrdinalIgnoreCase))
             return;
 
         // The config poll fires on a background thread; marshal the icon swap
         // (and the BitmapImage load that backs it) onto the UI thread.
         var dispatcher = Application.Current?.Dispatcher;
         if (dispatcher is null || dispatcher.CheckAccess())
-            ApplyTrayIconFromConfig(newSource);
+            ApplyTrayIconFromConfig(slot, newSource);
         else
-            dispatcher.BeginInvoke(() => ApplyTrayIconFromConfig(newSource));
+            dispatcher.BeginInvoke(() => ApplyTrayIconFromConfig(slot, newSource));
     }
 
     /// <summary>
-    /// Resolves the <c>Branding\TrayIcon</c> policy value into the custom
-    /// default-state icon. Local paths are loaded directly; URLs are cached to
-    /// <c>%ProgramData%\TrayLight\Cache\tray-icon.ico</c> and downloaded in the
-    /// background. Any failure falls back to the embedded default icon.
+    /// Resolves a <c>Branding\TrayIcon</c> / <c>Branding\TrayIconWarning</c>
+    /// policy value into the slot's custom icon. Local paths are loaded
+    /// directly; URLs are cached to <c>%ProgramData%\TrayLight\Cache\</c>
+    /// (<c>tray-icon.ico</c> / <c>tray-icon-warning.ico</c>) and downloaded in
+    /// the background. Any failure falls back to the embedded default icon.
     /// </summary>
-    private void ApplyTrayIconFromConfig(string? source)
+    private void ApplyTrayIconFromConfig(CustomIconSlot slot, string? source)
     {
         source ??= string.Empty;
-        _currentTrayIconSource = source;
+        slot.Source = source;
 
         try
         {
             if (string.IsNullOrWhiteSpace(source))
             {
-                _customNormalIcon = null;
+                slot.Icon = null;
             }
             else if (IsHttpUrl(source))
             {
                 // Surface a cached copy immediately so the icon doesn't flicker
                 // while the (re-)download runs in the background.
-                _customNormalIcon = File.Exists(CachedTrayIconPath)
-                    ? TryLoadIconFromFile(CachedTrayIconPath)
+                slot.Icon = File.Exists(slot.CachePath)
+                    ? TryLoadIconFromFile(slot.CachePath)
                     : null;
-                _ = DownloadAndApplyAsync(source);
+                _ = DownloadAndApplyAsync(slot, source);
             }
             else
             {
-                _customNormalIcon = File.Exists(source) ? TryLoadIconFromFile(source) : null;
-                if (_customNormalIcon is null)
+                slot.Icon = File.Exists(source) ? TryLoadIconFromFile(source) : null;
+                if (slot.Icon is null)
                     _log.LogWarning(
-                        "Custom tray icon '{Path}' not found or could not be loaded; using default icon.",
-                        source);
+                        "Custom tray icon {Policy} '{Path}' not found or could not be loaded; using default icon.",
+                        slot.PolicyName, source);
             }
         }
         catch (Exception ex)
         {
-            _customNormalIcon = null;
+            slot.Icon = null;
             _log.LogWarning(ex,
-                "Failed to apply custom tray icon '{Source}'; using default icon.", source);
+                "Failed to apply custom tray icon {Policy} '{Source}'; using default icon.",
+                slot.PolicyName, source);
         }
 
         ApplyBadgeState(_badges.Current);
     }
 
-    private async Task DownloadAndApplyAsync(string url)
+    private async Task DownloadAndApplyAsync(CustomIconSlot slot, string url)
     {
+        var cachePath = slot.CachePath;
         try
         {
             Directory.CreateDirectory(LogoService.CacheDirectory);
@@ -263,16 +272,18 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
 
             // Write to a temp file then atomically replace, so a partial
             // download never overwrites the previous good icon.
-            var tmp = CachedTrayIconPath + ".tmp";
+            var tmp = cachePath + ".tmp";
             await using (var fs = File.Create(tmp))
                 await response.Content.CopyToAsync(fs).ConfigureAwait(false);
-            File.Move(tmp, CachedTrayIconPath, overwrite: true);
+            File.Move(tmp, cachePath, overwrite: true);
 
             void Apply()
             {
-                var icon = TryLoadIconFromFile(CachedTrayIconPath);
+                // The policy may have changed while the download was running.
+                if (!string.Equals(slot.Source, url, StringComparison.OrdinalIgnoreCase)) return;
+                var icon = TryLoadIconFromFile(cachePath);
                 if (icon is null) return;
-                _customNormalIcon = icon;
+                slot.Icon = icon;
                 ApplyBadgeState(_badges.Current);
             }
 
@@ -283,13 +294,27 @@ public partial class TrayIconViewModel : ObservableObject, IDisposable
                 dispatcher.BeginInvoke((Action)Apply);
 
             _log.LogInformation(LogEvents.ConfigLoaded,
-                "Custom tray icon downloaded from {Url} to {Cache}.", url, CachedTrayIconPath);
+                "Custom tray icon {Policy} downloaded from {Url} to {Cache}.",
+                slot.PolicyName, url, cachePath);
         }
         catch (Exception ex)
         {
             _log.LogWarning(ex,
-                "Failed to download custom tray icon from {Url}; using default icon.", url);
+                "Failed to download custom tray icon {Policy} from {Url}; using default icon.",
+                slot.PolicyName, url);
         }
+    }
+
+    /// <summary>One policy-driven tray icon (normal or warning state).</summary>
+    private sealed class CustomIconSlot(string policyName, string cacheFileName)
+    {
+        public string PolicyName { get; } = policyName;
+
+        /// <summary>Cache file for an icon downloaded from an ADMX URL.</summary>
+        public string CachePath => Path.Combine(LogoService.CacheDirectory, cacheFileName);
+
+        public string Source { get; set; } = string.Empty;
+        public ImageSource? Icon { get; set; }
     }
 
     private static bool IsHttpUrl(string source) =>

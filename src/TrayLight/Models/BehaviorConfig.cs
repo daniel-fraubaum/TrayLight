@@ -13,7 +13,11 @@ public class BehaviorConfig
     [JsonPropertyName("showWelcomeScreen")]
     public bool ShowWelcomeScreen { get; set; } = true;
 
-    /// <summary>When true, the tray icon shows a notification badge for warnings.</summary>
+    /// <summary>
+    /// Master switch for tile warnings (warning tray icon, tile warning marker,
+    /// warning toast). When false, per-tile ShowNotificationBadge is ignored.
+    /// See <see cref="Services.Badges.BadgePolicy"/>.
+    /// </summary>
     [JsonPropertyName("notifyOnUpdates")]
     public bool NotifyOnUpdates { get; set; } = true;
 

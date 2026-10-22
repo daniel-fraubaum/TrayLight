@@ -1,4 +1,7 @@
+using System.ComponentModel;
 using TrayLight.Models;
+using TrayLight.Services;
+using TrayLight.Services.Actions;
 using TrayLight.Services.Badges;
 using TrayLight.Services.Providers;
 using Xunit;
@@ -127,6 +130,112 @@ public class NotificationBadgeServiceTests
         c.Emit(Ok("C"));
 
         Assert.Equal(2, sut.Current.Count);
+    }
+
+    private sealed class StubConfig : IConfigurationService
+    {
+        public AppConfiguration Current { get; private set; }
+        public string ConfigPath => string.Empty;
+        public DateTime? LastLoadedUtc => DateTime.UtcNow;
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public StubConfig(bool notifyOnUpdates, bool? lastRebootBadge = null) =>
+            Current = Build(notifyOnUpdates, lastRebootBadge);
+
+        public void Push(bool notifyOnUpdates, bool? lastRebootBadge = null)
+        {
+            Current = Build(notifyOnUpdates, lastRebootBadge);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Current)));
+        }
+
+        private static AppConfiguration Build(bool notifyOnUpdates, bool? lastRebootBadge) => new()
+        {
+            Behavior = new BehaviorConfig { NotifyOnUpdates = notifyOnUpdates },
+            InfoItems =
+            {
+                new InfoItemConfig { Type = InfoItemType.LastReboot,  ShowNotificationBadge = lastRebootBadge },
+                new InfoItemConfig { Type = InfoItemType.StorageUsed, ShowNotificationBadge = true },
+            },
+        };
+
+        public AppConfiguration Load() => Current;
+        public void StartWatching() { }
+        public void Dispose() { }
+    }
+
+    private sealed class FakeNotifier : INotificationService
+    {
+        public int Count { get; private set; }
+        public void Notify(string title, string message, NotificationSeverity severity = NotificationSeverity.Info)
+            => Count++;
+    }
+
+    [Fact]
+    public void Master_switch_disabled_suppresses_warning_icon_and_toast_despite_tile_badge_on()
+    {
+        var provider = new FakeProvider("lastReboot");
+        var config = new StubConfig(notifyOnUpdates: false, lastRebootBadge: true);
+        using var sut = new NotificationBadgeService(new[] { provider }, config);
+        var notifier = new FakeNotifier();
+        using var toasts = new ToastWarningNotifier(sut, notifier);
+        sut.Start();
+
+        provider.Emit(Warning("Last reboot", "Reboot pending"));
+
+        Assert.False(sut.Current.HasWarnings);
+        Assert.Equal(0, notifier.Count);
+    }
+
+    [Fact]
+    public void Per_tile_badge_disabled_only_suppresses_that_tile()
+    {
+        var reboot = new FakeProvider("lastReboot");
+        var storage = new FakeProvider("storageUsed");
+        var config = new StubConfig(notifyOnUpdates: true, lastRebootBadge: false);
+        using var sut = new NotificationBadgeService(new IInfoItemProvider[] { reboot, storage }, config);
+        sut.Start();
+
+        reboot.Emit(Warning("Last reboot", "Reboot pending"));
+        storage.Emit(Warning("Storage", "Disk full"));
+
+        var entry = Assert.Single(sut.Current.Warnings);
+        Assert.Equal("storageUsed", entry.TypeKey);
+    }
+
+    [Fact]
+    public void Disabling_master_switch_at_runtime_clears_active_warnings()
+    {
+        var provider = new FakeProvider("lastReboot");
+        var config = new StubConfig(notifyOnUpdates: true);
+        using var sut = new NotificationBadgeService(new[] { provider }, config);
+        sut.Start();
+        provider.Emit(Warning("Last reboot", "Reboot pending"));
+        Assert.True(sut.Current.HasWarnings);
+
+        BadgeState? last = null;
+        sut.BadgeChanged += (_, s) => last = s;
+        config.Push(notifyOnUpdates: false, lastRebootBadge: true);
+
+        Assert.NotNull(last);
+        Assert.False(last!.HasWarnings);
+        Assert.False(sut.Current.HasWarnings);
+    }
+
+    [Fact]
+    public void Enabling_master_switch_at_runtime_raises_pending_warning()
+    {
+        var provider = new FakeProvider("lastReboot");
+        var config = new StubConfig(notifyOnUpdates: false);
+        using var sut = new NotificationBadgeService(new[] { provider }, config);
+        sut.Start();
+        provider.Emit(Warning("Last reboot", "Reboot pending"));
+
+        WarningEntry? raised = null;
+        sut.WarningRaised += (_, e) => raised = e;
+        config.Push(notifyOnUpdates: true);
+
+        Assert.NotNull(raised);
+        Assert.True(sut.Current.HasWarnings);
     }
 
     [Fact]

@@ -10,6 +10,7 @@ using TrayLight.Models;
 using TrayLight.Resources;
 using TrayLight.Services;
 using TrayLight.Services.Actions;
+using TrayLight.Services.Badges;
 using TrayLight.Services.Logging;
 
 namespace TrayLight.ViewModels;
@@ -239,6 +240,9 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
     private InfoItemViewModel BuildInfoItem(InfoItemConfig cfg)
     {
         var behavior = _configService.Current.Behavior;
+        // Same precedence as the tray icon and toasts: NotifyOnUpdates = 0
+        // hides every tile warning marker, then per-tile ShowNotificationBadge.
+        var showWarning = BadgePolicy.IsEnabled(behavior, cfg);
         var vm = new InfoItemViewModel
         {
             Type     = cfg.Type,
@@ -277,14 +281,14 @@ public partial class TrayPopupViewModel : ObservableObject, IDisposable
                     System.Globalization.CultureInfo.InvariantCulture);
                 // Behavior\RebootWarningDays: 0 disables the warning entirely.
                 var rebootLimit = behavior.RebootWarningDays;
-                vm.HasWarning = rebootLimit > 0 && uptime.TotalDays > rebootLimit;
+                vm.HasWarning = showWarning && rebootLimit > 0 && uptime.TotalDays > rebootLimit;
                 break;
 
             case InfoItemType.StorageUsed:
                 var (sizeText, percent) = GetSystemDriveUsage();
                 vm.Value = Strings.Format("StoragePercentUsedFormat", percent);
                 vm.ValueTooltip = sizeText;
-                vm.HasWarning = cfg.StorageLimit is int sl && percent >= sl;
+                vm.HasWarning = showWarning && cfg.StorageLimit is int sl && percent >= sl;
                 vm.WarningSeverity = percent >= 95 ? "danger" : "warning";
                 break;
 

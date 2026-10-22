@@ -39,9 +39,14 @@ public sealed class LocalizationService
     /// <summary>Manifest name of the embedded <c>en.json</c> last-resort fallback.</summary>
     private const string EmbeddedEnglishResourceName = "TrayLight.en.json";
 
-    /// <summary>Languages that ship with the installer.</summary>
+    /// <summary>
+    /// Languages that ship with the installer. Two-letter entries cover every
+    /// region of that language (de-AT → de). Full culture entries match only
+    /// that culture: zh-CN is Simplified Chinese, so zh-TW / zh-HK (Traditional)
+    /// deliberately stay on English.
+    /// </summary>
     public static readonly IReadOnlyList<string> SupportedLanguages =
-        new[] { "en", "de", "fr", "nl" };
+        new[] { "en", "de", "fr", "nl", "zh-CN" };
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -193,11 +198,16 @@ public sealed class LocalizationService
 
     /// <summary>
     /// Resolves the nearest built-in (shipped) language for the given UI culture
-    /// (e.g. <c>de-AT</c> → <c>de</c>), falling back to English. Used for
-    /// diagnostics/logging; actual string resolution goes through the JSON files.
+    /// (e.g. <c>de-AT</c> → <c>de</c>, <c>zh-CN</c> → <c>zh-CN</c>), falling back
+    /// to English. Used for diagnostics/logging; actual string resolution goes
+    /// through the JSON files (exact culture file first, then two-letter file).
     /// </summary>
     public static string ResolveLanguage(CultureInfo uiCulture)
     {
+        var exact = SupportedLanguages.FirstOrDefault(
+            l => string.Equals(l, uiCulture.Name, StringComparison.OrdinalIgnoreCase));
+        if (exact is not null) return exact;
+
         var lang = uiCulture.TwoLetterISOLanguageName;
         return SupportedLanguages.Contains(lang, StringComparer.OrdinalIgnoreCase)
             ? lang

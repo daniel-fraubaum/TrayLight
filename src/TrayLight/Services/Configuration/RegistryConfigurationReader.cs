@@ -38,6 +38,7 @@ internal static class RegistryConfigurationReader
         Logo            = s.GetString(Branding, "Logo")        ?? d.Logo,
         AccentColor     = s.GetString(Branding, "AccentColor") ?? d.AccentColor,
         TrayIcon        = s.GetString(Branding, "TrayIcon")    ?? d.TrayIcon,
+        TrayIconWarning = s.GetString(Branding, "TrayIconWarning") ?? d.TrayIconWarning,
         CompanyName     = s.GetString(Branding, "CompanyName") ?? d.CompanyName,
         HideAttribution = s.GetInt(Branding, "HideAttribution") is { } h ? h != 0 : d.HideAttribution,
     };

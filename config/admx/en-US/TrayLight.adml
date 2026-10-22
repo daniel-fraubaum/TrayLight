@@ -24,7 +24,9 @@
       <string id="Pol_Branding_Logo">Logo path or URL</string>
       <string id="Pol_Branding_Logo_Help">Enter a URL (https://...) or a local file path. URLs are downloaded and cached automatically.</string>
       <string id="Pol_Branding_TrayIcon">Tray icon path</string>
-      <string id="Pol_Branding_TrayIcon_Help">Optional path to an .ico file used for the system tray icon.</string>
+      <string id="Pol_Branding_TrayIcon_Help">Optional local path or URL (https://...) of an .ico file used for the system tray icon. URLs are downloaded and cached automatically. When empty or not loadable, the built-in icon is used.</string>
+      <string id="Pol_Branding_TrayIconWarning">Warning tray icon path</string>
+      <string id="Pol_Branding_TrayIconWarning_Help">Optional local path or URL (https://...) of an .ico file shown in the system tray while a tile reports a warning. URLs are downloaded and cached automatically. When empty or not loadable, the built-in warning icon is used. The warning icon only appears while Behavior, Show notification badges is enabled or not configured.</string>
       <string id="Pol_Branding_CompanyName">Company name</string>
       <string id="Pol_Branding_CompanyName_Help">Shown in the About dialog and welcome screen.</string>
       <string id="Pol_Branding_HideAttribution">Hide attribution line</string>
@@ -38,7 +40,7 @@
       <string id="Pol_Behavior_ShowWelcomeScreen">Show welcome screen on first launch</string>
       <string id="Pol_Behavior_ShowWelcomeScreen_Help">Disable to suppress the first-run welcome dialog.</string>
       <string id="Pol_Behavior_NotifyOnUpdates">Show notification badges</string>
-      <string id="Pol_Behavior_NotifyOnUpdates_Help">When enabled, the tray icon shows a counter for active warnings.</string>
+      <string id="Pol_Behavior_NotifyOnUpdates_Help">Master switch for tile warnings. When enabled or not configured, a tile that reports a warning (uptime above the reboot threshold, or storage above its limit) switches the tray icon to the warning icon, shows a warning marker on the tile and sends a warning notification. The per-tile Show notification badge value can then turn this off for a single tile. When disabled, none of this happens for any tile, regardless of the per-tile values.</string>
       <string id="Pol_Behavior_RebootWarningDays">Warn after uptime exceeds (days)</string>
       <string id="Pol_Behavior_RebootWarningDays_Help">Number of days a device can stay up before the Last-Reboot tile raises a warning. Set to 0 to disable. Default: 7.</string>
 
@@ -67,7 +69,8 @@
       <string id="LogLevel_Critical">Critical</string>
 
       <!-- Info items -->
-      <string id="Pol_InfoItem_Help">Configure this information tile. Enable the policy to show the tile. Position controls grid order (0-7). Leave Title EMPTY to use the built-in default, which is automatically localized to the Windows display language (English, German, French). Only enter a Title if you want to override the localized default. Icon takes a Segoe Fluent Icons code such as E977.</string>
+      <string id="Pol_InfoItem_Help">Configure this information tile. Enable the policy to show the tile. Position controls grid order (0-7). Leave Title EMPTY to use the built-in default, which is automatically localized to the Windows display language. Only enter a Title if you want to override the localized default. Icon takes a Segoe Fluent Icons code such as E977.</string>
+      <string id="Pol_InfoItem_WarningTile_Help">Configure this information tile. Enable the policy to show the tile. Position controls grid order (0-7). Leave Title EMPTY to use the built-in default, which is automatically localized to the Windows display language. Only enter a Title if you want to override the localized default. Icon takes a Segoe Fluent Icons code such as E977.  Show notification badge (0 or 1): when 1, a warning from this tile switches the tray icon to the warning icon, shows a warning marker on the tile and sends a warning notification. When 0, the tile stays silent. Default: 1.  Precedence: this value only applies while Behavior, Show notification badges is enabled or not configured. If that policy is disabled, no tile shows warnings, even when this value is 1.</string>
       <string id="Pol_InfoItem_ComputerName">Tile: Computer name</string>
       <string id="Pol_InfoItem_OsVersion">Tile: Operating system version</string>
       <string id="Pol_InfoItem_LastReboot">Tile: Last reboot / uptime</string>
@@ -99,7 +102,10 @@
         <textBox refId="Branding_Logo_Value"><label>Logo URL or file path:</label></textBox>
       </presentation>
       <presentation id="Pol_Branding_TrayIcon">
-        <textBox refId="Branding_TrayIcon_Value"><label>Icon file path:</label></textBox>
+        <textBox refId="Branding_TrayIcon_Value"><label>Icon file path or URL:</label></textBox>
+      </presentation>
+      <presentation id="Pol_Branding_TrayIconWarning">
+        <textBox refId="Branding_TrayIconWarning_Value"><label>Warning icon file path or URL:</label></textBox>
       </presentation>
       <presentation id="Pol_Branding_CompanyName">
         <textBox refId="Branding_CompanyName_Value"><label>Company name:</label></textBox>

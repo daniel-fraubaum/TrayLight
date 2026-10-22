@@ -72,6 +72,14 @@
       <elements><text id="Branding_TrayIcon_Value" valueName="TrayIcon" maxLength="1023" /></elements>
     </policy>
 
+    <policy name="Branding_TrayIconWarning" class="Machine" displayName="$(string.Pol_Branding_TrayIconWarning)"
+            explainText="$(string.Pol_Branding_TrayIconWarning_Help)" presentation="$(presentation.Pol_Branding_TrayIconWarning)"
+            key="SOFTWARE\Policies\TrayLight\Branding">
+      <parentCategory ref="Branding" />
+      <supportedOn ref="traylight:SUPPORTED_TrayLight" />
+      <elements><text id="Branding_TrayIconWarning_Value" valueName="TrayIconWarning" maxLength="1023" /></elements>
+    </policy>
+
     <policy name="Branding_CompanyName" class="Machine" displayName="$(string.Pol_Branding_CompanyName)"
             explainText="$(string.Pol_Branding_CompanyName_Help)" presentation="$(presentation.Pol_Branding_CompanyName)"
             key="SOFTWARE\Policies\TrayLight\Branding">
@@ -233,7 +241,7 @@
     </policy>
 
     <policy name="InfoItem_LastReboot" class="Machine" displayName="$(string.Pol_InfoItem_LastReboot)"
-            explainText="$(string.Pol_InfoItem_Help)" presentation="$(presentation.Pol_InfoItem_LastReboot)"
+            explainText="$(string.Pol_InfoItem_WarningTile_Help)" presentation="$(presentation.Pol_InfoItem_LastReboot)"
             key="SOFTWARE\Policies\TrayLight\InfoItems\LastReboot">
       <parentCategory ref="InfoItems" />
       <supportedOn ref="traylight:SUPPORTED_TrayLight" />
@@ -246,7 +254,7 @@
     </policy>
 
     <policy name="InfoItem_StorageUsed" class="Machine" displayName="$(string.Pol_InfoItem_StorageUsed)"
-            explainText="$(string.Pol_InfoItem_Help)" presentation="$(presentation.Pol_InfoItem_StorageUsed)"
+            explainText="$(string.Pol_InfoItem_WarningTile_Help)" presentation="$(presentation.Pol_InfoItem_StorageUsed)"
             key="SOFTWARE\Policies\TrayLight\InfoItems\StorageUsed">
       <parentCategory ref="InfoItems" />
       <supportedOn ref="traylight:SUPPORTED_TrayLight" />

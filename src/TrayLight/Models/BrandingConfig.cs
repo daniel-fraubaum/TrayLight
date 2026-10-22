@@ -19,6 +19,13 @@ public class BrandingConfig
     [JsonPropertyName("trayIcon")]
     public string TrayIcon { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Optional local path or URL of a custom .ico shown while a tile reports a
+    /// warning. Empty falls back to the built-in warning icon.
+    /// </summary>
+    [JsonPropertyName("trayIconWarning")]
+    public string TrayIconWarning { get; set; } = string.Empty;
+
     [JsonPropertyName("companyName")]
     public string CompanyName { get; set; } = string.Empty;
 

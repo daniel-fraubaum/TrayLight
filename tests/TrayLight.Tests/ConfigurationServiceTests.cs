@@ -84,6 +84,30 @@ public class ConfigurationServiceTests
     }
 
     [Fact]
+    public void Load_TrayIconWarning_IsReadFromBranding()
+    {
+        var src = new InMemoryRegistrySource()
+            .Set("Branding", "TrayIcon",        @"C:\Icons\normal.ico")
+            .Set("Branding", "TrayIconWarning", "https://example.com/warning.ico");
+        using var svc = new ConfigurationService(src);
+
+        svc.Load();
+
+        Assert.Equal(@"C:\Icons\normal.ico", svc.Current.Branding.TrayIcon);
+        Assert.Equal("https://example.com/warning.ico", svc.Current.Branding.TrayIconWarning);
+    }
+
+    [Fact]
+    public void Load_TrayIconWarning_NotConfigured_IsEmptyForBuiltInFallback()
+    {
+        using var svc = new ConfigurationService(new InMemoryRegistrySource());
+
+        svc.Load();
+
+        Assert.Equal(string.Empty, svc.Current.Branding.TrayIconWarning);
+    }
+
+    [Fact]
     public void Load_BehaviorAndLogging_AreReadAsDwords()
     {
         var src = new InMemoryRegistrySource()

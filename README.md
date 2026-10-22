@@ -18,7 +18,9 @@
   count) without opening the full popup; localized like the rest of the UI
 - Tray-icon state swap: shows a warning variant
   (`Assets/app-warning.ico`) whenever any info tile reports a real warning,
-  otherwise the normal icon (`Assets/app-normal.ico`)
+  otherwise the normal icon (`Assets/app-normal.ico`). `Behavior\NotifyOnUpdates`
+  = 0 turns this off together with tile warning markers and warning
+  notifications, regardless of the per-tile `ShowNotificationBadge` values
 - **Default info tiles** (always shown, six in total):
   - **Computer Name** — click to copy
   - **OS Version** — informational
@@ -34,6 +36,9 @@
     on machines running Hyper-V or VMware.
 - Up to **6 configurable Quick Action shortcut buttons** (URL / App / Command),
   each with its own title, subtitle, icon and position via ADMX
+- Tile titles and shortcut labels only show their own tooltip when the text is
+  actually cut off. Otherwise hovering a tile shows its value tooltip (click to
+  copy, sync details, adapter list)
 - **Dynamic placeholders** in shortcut actions — embed `{{ComputerName}}`,
   `{{OsVersion}}`, `{{SerialNumber}}`, `{{IntuneSync}}` and more; replaced with
   live device values at click-time (auto URL-encoded for mailto/https links)
@@ -43,7 +48,7 @@
   ADMX policy.
 - Toast notifications for warnings raised by info tiles
 - **Multi-language UI** — auto-detects the Windows display language; ships with
-  English, German, French and Dutch as runtime JSON files, and any other language
+  English, German, French, Dutch and Simplified Chinese as runtime JSON files, and any other language
   can be added by dropping a JSON file into the `Languages` folder — no rebuild
   required (see [Localization](#localization))
 - Light / Dark theme follows the Windows system setting
@@ -100,6 +105,21 @@ headsinthecloud.blog" line in the popup footer. When the policy is not
 configured or disabled (`0`), the line is shown (default). The attribution in
 the About dialog ("Created by headsinthecloud.blog") is not affected and always
 stays visible.
+
+### Custom tray icons
+
+Both tray icon states can be branded with an `.ico` file, given as a local
+path or a URL:
+
+- `Branding\TrayIcon` replaces the normal icon. URLs are cached to
+  `%ProgramData%\TrayLight\Cache\tray-icon.ico`.
+- `Branding\TrayIconWarning` replaces the warning icon shown while a tile
+  reports a warning. URLs are cached to
+  `%ProgramData%\TrayLight\Cache\tray-icon-warning.ico`.
+
+If a value is empty or the file can't be loaded, the built-in icon for that
+state is used. The warning icon only appears while `Behavior\NotifyOnUpdates`
+is enabled or not configured.
 
 ## Tray icon visibility
 
@@ -189,6 +209,7 @@ drop — **no rebuild required**.
 | German   | `de.json` | Full |
 | French   | `fr.json` | Full |
 | Dutch    | `nl.json` | Full (community contribution, Radboud Universiteit) |
+| Simplified Chinese | `zh-CN.json` | Full (community contribution, [@m-hanisch](https://github.com/m-hanisch)) |
 
 ### How resolution works
 
@@ -201,13 +222,15 @@ therefore falls back to English automatically (never blank). The match order is:
 3. **English** — `en.json` (the neutral base)
 
 Regional variants resolve to their base language (e.g. `de-AT` → `de.json`,
-`fr-CA` → `fr.json`). If the `Languages` folder is missing or a file is corrupt,
+`fr-CA` → `fr.json`). Simplified Chinese is matched on the exact culture only:
+`zh-CN` → `zh-CN.json`, while Traditional Chinese (`zh-TW`, `zh-HK`) stays on
+English. If the `Languages` folder is missing or a file is corrupt,
 TrayLight falls back to an embedded copy of `en.json`, logs a warning and keeps
 running.
 
 ### Three ways to get a language
 
-**1. Use a built-in language (EN / DE / FR / NL).** Nothing to do — the app picks
+**1. Use a built-in language (EN / DE / FR / NL / ZH-CN).** Nothing to do — the app picks
 the right one from the Windows display language.
 
 **2. Drop a custom JSON file — no rebuild needed.** To add e.g. Italian, copy

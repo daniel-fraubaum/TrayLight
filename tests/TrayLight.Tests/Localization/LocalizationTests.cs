@@ -91,6 +91,31 @@ public class LocalizationTests
     }
 
     [Fact]
+    public void Simplified_Chinese_resources_are_used_for_zh_CN()
+    {
+        WithUiCulture("zh-CN", () =>
+        {
+            Assert.Equal("计算机名称", Strings.TileComputerName);
+            Assert.Equal("快捷操作", Strings.QuickActions);
+            Assert.Equal("未注册", Strings.StatusNotEnrolled);
+            Assert.Equal("退出", Strings.MenuQuit);
+        });
+    }
+
+    [Theory]
+    // Traditional Chinese must not pick up the Simplified zh-CN file.
+    [InlineData("zh-TW")]
+    [InlineData("zh-HK")]
+    public void Traditional_Chinese_falls_back_to_english(string culture)
+    {
+        WithUiCulture(culture, () =>
+        {
+            Assert.Equal("Computer Name", Strings.TileComputerName);
+            Assert.Equal("Quick Actions", Strings.QuickActions);
+        });
+    }
+
+    [Fact]
     public void Regional_culture_falls_back_to_base_language()
     {
         // de-AT has no dedicated resource — it must resolve to the de resources.
@@ -124,6 +149,9 @@ public class LocalizationTests
     [InlineData("fr-CA", "fr")]
     [InlineData("nl-NL", "nl")]
     [InlineData("nl-BE", "nl")]
+    [InlineData("zh-CN", "zh-CN")]
+    [InlineData("zh-TW", "en")]
+    [InlineData("zh-HK", "en")]
     [InlineData("en-US", "en")]
     [InlineData("es-ES", "en")]
     [InlineData("ja-JP", "en")]
@@ -306,6 +334,14 @@ public class LocalizationTests
             Assert.Equal("Laatste Intune-synchronisatie: 01.01.2026 08:00",
                 Strings.Format("Tooltip_LastIntuneSync", "01.01.2026 08:00"));
         });
+
+        WithUiCulture("zh-CN", () =>
+        {
+            Assert.Equal("（单击复制）", Strings.TooltipClickToCopy);
+            Assert.Equal("单击立即同步。", Strings.TooltipClickToSyncNow);
+            Assert.Equal("上次 Intune 同步：01.01.2026 08:00",
+                Strings.Format("Tooltip_LastIntuneSync", "01.01.2026 08:00"));
+        });
     }
 
     [Fact]
@@ -334,6 +370,7 @@ public class LocalizationTests
     [InlineData("de")]
     [InlineData("fr")]
     [InlineData("nl")]
+    [InlineData("zh-CN")]
     public void Every_shipped_language_defines_every_english_key(string language)
     {
         // A shipped language must define every key en.json has, otherwise the

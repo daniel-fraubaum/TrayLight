@@ -6,7 +6,7 @@ Files shipped with the application:
 | ------------------ | -------------------------------------------------------------------- |
 | `app.ico`          | MSI Add/Remove-Programs icon and Start-Menu shortcut icon.           |
 | `app-normal.ico`   | Tray icon shown when no info tile is reporting a warning.            |
-| `app-warning.ico`  | Tray icon shown when at least one info tile reports a warning.       |
+| `app-warning.ico`  | Tray icon shown when at least one info tile reports a warning. Overridable via `Branding\TrayIconWarning`. |
 | `default-logo.png` | Header logo shown until the customer overrides it via `Branding\Logo`. |
 
 All icons should be Windows `.ico` files containing 16x16, 32x32, 48x48 and

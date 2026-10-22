@@ -26,13 +26,14 @@ UI; raw OMA-URI values still work and are documented here for reference.
 | `Branding`                      | `Title`                     | REG_SZ    | Header text. Default `IT Support`.                                   |
 | `Branding`                      | `AccentColor`               | REG_SZ    | `#RRGGBB` or `#AARRGGBB`. Default `#0078D4`.                         |
 | `Branding`                      | `Logo`                      | REG_SZ    | URL (https://...) or local path of header logo. URLs are cached.    |
-| `Branding`                      | `TrayIcon`                  | REG_SZ    | Path to a custom `.ico`.                                             |
+| `Branding`                      | `TrayIcon`                  | REG_SZ    | Local path or URL of a custom `.ico` for the normal state. URLs are cached to `%ProgramData%\TrayLight\Cache\tray-icon.ico`. Empty = built-in icon. |
+| `Branding`                      | `TrayIconWarning`           | REG_SZ    | Local path or URL of a custom `.ico` shown while a tile reports a warning. URLs are cached to `%ProgramData%\TrayLight\Cache\tray-icon-warning.ico`. Empty = built-in warning icon. |
 | `Branding`                      | `CompanyName`               | REG_SZ    | Shown in About / Welcome.                                            |
 | `Branding`                      | `HideAttribution`           | REG_DWORD | `1` hides the "Powered by" line in the popup footer. Default `0` (shown). About dialog unaffected. |
 | `Behavior`                      | `AutoStart`                 | REG_DWORD | `0`/`1`.                                                             |
 | `Behavior`                      | `RefreshIntervalMinutes`    | REG_DWORD | `0` disables.                                                        |
 | `Behavior`                      | `ShowWelcomeScreen`         | REG_DWORD | `0`/`1`.                                                             |
-| `Behavior`                      | `NotifyOnUpdates`           | REG_DWORD | `0`/`1`.                                                             |
+| `Behavior`                      | `NotifyOnUpdates`           | REG_DWORD | Master switch for tile warnings. `1` or not set: a tile warning switches the tray icon to the warning icon, marks the tile and sends a warning notification. `0`: none of this for any tile, per-tile `ShowNotificationBadge` is ignored. |
 | `Behavior`                      | `RebootWarningDays`         | REG_DWORD | Days of uptime before Last-Reboot tile warns. `0` disables. Default `7`. |
 | `Footer`                        | `Text`                      | REG_SZ    | Custom footer line above the hardcoded `Powered by headsinthecloud.blog`. |
 | `Footer`                        | `ShowLastSync`              | REG_DWORD | `0`/`1`.                                                             |
@@ -45,7 +46,7 @@ UI; raw OMA-URI values still work and are documented here for reference.
 | `InfoItems\<TypeName>`          | `Position`                  | REG_DWORD | `-1` (hidden) or `0..7`.                                             |
 | `InfoItems\<TypeName>`          | `Title`                     | REG_SZ    | Custom label override.                                               |
 | `InfoItems\<TypeName>`          | `Icon`                      | REG_SZ    | Segoe Fluent Icons code, e.g. `E977`.                                |
-| `InfoItems\<TypeName>`          | `ShowNotificationBadge`     | REG_DWORD | `0`/`1`. Honored only on `LastReboot` and `StorageUsed` (the only tiles that raise warnings). |
+| `InfoItems\<TypeName>`          | `ShowNotificationBadge`     | REG_DWORD | `0`/`1`, not set = `1`. Honored only on `LastReboot` and `StorageUsed` (the only tiles that raise warnings), and only while `Behavior\NotifyOnUpdates` is `1` or not set. `0` keeps that tile from switching the tray icon, showing its warning marker and sending a notification. |
 | `InfoItems\StorageUsed`         | `StorageLimit`              | REG_DWORD | Percent threshold for warning (0..100). Default `90`.                |
 | `Shortcuts`                     | `AllowUserShortcuts`        | REG_DWORD | Master toggle. `0` hides every shortcut tile.                        |
 | `Shortcuts\<n>`                 | `Title`                     | REG_SZ    | Required.                                                            |

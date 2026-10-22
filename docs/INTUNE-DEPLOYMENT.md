@@ -109,7 +109,8 @@ template is shipped with each release (and lives in
 2. Create a new **Imported Administrative templates** profile. The
    template exposes the full configuration surface:
 
-   - **Branding** — Title, AccentColor, Logo, TrayIcon, CompanyName,
+   - **Branding** — Title, AccentColor, Logo, TrayIcon, TrayIconWarning
+     (custom warning-state tray icon, see [section 3c](#3c-customer-logo)), CompanyName,
      HideAttribution (hides the "Powered by" footer line; About dialog
      unaffected)
    - **Behavior** — AutoStart, RefreshIntervalMinutes, ShowWelcomeScreen,
@@ -123,6 +124,13 @@ template is shipped with each release (and lives in
      Only `LastReboot` and `StorageUsed` can raise warnings, so
      `ShowNotificationBadge` is exposed on those two tiles. `StorageUsed`
      adds a `StorageLimit` (% threshold) field.
+
+     **Warning precedence:** *Behavior > Show notification badges*
+     (`NotifyOnUpdates`) is the master switch. Set to Disabled, no tile
+     switches the tray icon to the warning icon, shows a warning marker or
+     sends a warning notification, even when a tile's
+     `ShowNotificationBadge` is 1 (the template default). The per-tile value
+     only applies while the master switch is Enabled or Not configured.
    - **Shortcuts** — a master *Allow shortcut tiles* toggle plus six
      individually configurable slots (*Shortcut slot 1* … *Shortcut slot 6*).
      Each slot exposes Title, Subtitle, ActionType
@@ -135,8 +143,8 @@ template is shipped with each release (and lives in
 3. Assign the profile to the same device groups as the MSI.
 
 > **Localized UI vs. ADMX text.** TrayLight auto-detects the Windows display
-> language and shows its built-in UI strings in English, German or French
-> accordingly. Any text you configure through ADMX (tile titles, footer text,
+> language and shows its built-in UI strings in English, German, French, Dutch
+> or Simplified Chinese accordingly. Any text you configure through ADMX (tile titles, footer text,
 > info text, shortcut titles, branding title, …) **always overrides** the
 > auto-detected language — the localized strings are only the defaults used when
 > no ADMX value is set.
@@ -206,6 +214,13 @@ The `Branding\Logo` policy accepts a **URL** or a **local file path**.
 If `Branding\Logo` is empty or unset, TrayLight falls back to the built-in
 default icon shipped inside the executable.
 
+**Custom tray icons.** `Branding\TrayIcon` (normal state) and
+`Branding\TrayIconWarning` (shown while a tile reports a warning) take an
+`.ico` file as a local path or URL, the same way as the logo. URLs are cached
+to `%ProgramData%\TrayLight\Cache\tray-icon.ico` and
+`%ProgramData%\TrayLight\Cache\tray-icon-warning.ico`. An empty or unloadable
+value falls back to the built-in icon for that state.
+
 ### 3d. Dynamic placeholders in shortcut actions
 
 A shortcut **Action** can embed `{{Placeholder}}` tokens that TrayLight
@@ -240,7 +255,9 @@ mailto:it@example.com?subject=Support - {{ComputerName}}&body=Device: {{Computer
 
 TrayLight loads its UI translations from plain JSON files in
 `C:\Program Files\TrayLight\Languages\`. English (`en.json`), German (`de.json`),
-French (`fr.json`) and Dutch (`nl.json`) ship with the MSI. To add another
+French (`fr.json`), Dutch (`nl.json`) and Simplified Chinese (`zh-CN.json`,
+contributed by [@m-hanisch](https://github.com/m-hanisch)) ship with the MSI.
+Traditional Chinese (`zh-TW`, `zh-HK`) is not covered and stays on English. To add another
 language — or override the built-in wording — deploy an extra JSON file into that
 folder. **No app rebuild and no reinstall are required**; the file is picked up
 on the next restart of TrayLight.
